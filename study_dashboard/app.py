@@ -7,6 +7,45 @@ import json
 from data_manager import StudyDataManager
 from study_agent import StudyAgent
 
+def check_time_conflicts(planned_tasks, date):
+    """检查任务时间是否重叠"""
+    conflicts = []
+    time_ranges = []
+    
+    for task in planned_tasks:
+        if 'planned_start_time' in task and 'planned_end_time' in task:
+            try:
+                start_time = datetime.strptime(task['planned_start_time'], '%H:%M').time()
+                end_time = datetime.strptime(task['planned_end_time'], '%H:%M').time()
+                
+                start_dt = datetime.combine(date, start_time)
+                end_dt = datetime.combine(date, end_time)
+                
+                # 处理跨天情况
+                if end_dt < start_dt:
+                    end_dt += timedelta(days=1)
+                
+                time_ranges.append({
+                    'task_name': task['task_name'],
+                    'start': start_dt,
+                    'end': end_dt
+                })
+            except ValueError:
+                continue
+    
+    # 检查时间重叠
+    for i in range(len(time_ranges)):
+        for j in range(i + 1, len(time_ranges)):
+            range1 = time_ranges[i]
+            range2 = time_ranges[j]
+            
+            # 检查两个时间段是否重叠
+            if (range1['start'] < range2['end'] and range1['end'] > range2['start']):
+                conflict_msg = f"「{range1['task_name']}」和「{range2['task_name']}」时间重叠"
+                conflicts.append(conflict_msg)
+    
+    return conflicts
+
 # 页面设置
 st.set_page_config(
     page_title="学习分析仪表板",
@@ -195,7 +234,84 @@ if page == "今日记录":
                     })
                 
                 st.markdown("---")
+
+            # 在任务循环结束后添加计划任务提交按钮
+            col1, col2, col3 = st.columns([1, 2, 1])
+            with col2:
+                # 初始化session state
+                if 'tasks_confirmed' not in st.session_state:
+                    st.session_state.tasks_confirmed = False
+                if 'show_final_confirmation' not in st.session_state:
+                    st.session_state.show_final_confirmation = False
+                
+                # 如果任务已经确认，显示已确认状态
+                if st.session_state.tasks_confirmed:
+                    st.success("✅ 计划任务已确认，不可再修改")
+                    # 显示禁用的按钮
+                    disabled_btn = st.form_submit_button(
+                        "✅ 计划任务已确认",
+                        disabled=True,
+                        use_container_width=True,
+                        help="计划任务已确认，不可再修改"
+                    )
+                
+                # 如果正在显示最终确认，不显示原始确认按钮
+                elif st.session_state.show_final_confirmation:
+                    # 显示最终确认区域
+                    st.warning("⚠️ 请最终确认计划任务")
+                    st.info("确认后将无法再修改计划任务")
+                    
+                    confirm_col1, confirm_col2, confirm_col3 = st.columns([1, 1, 1])
+                    with confirm_col1:
+                        # 取消按钮
+                        cancel_confirm = st.form_submit_button(
+                            "❌ 取消",
+                            type="secondary",
+                            use_container_width=True
+                        )
+                        if cancel_confirm:
+                            st.session_state.show_final_confirmation = False
+                            st.rerun()
+                            
+                    with confirm_col2:
+                        # 最终确认按钮
+                        final_confirm = st.form_submit_button(
+                            "🔒 最终确认",
+                            type="primary",
+                            use_container_width=True
+                        )
+                        if final_confirm:
+                            st.session_state.tasks_confirmed = True
+                            st.session_state.show_final_confirmation = False
+                            st.success(f"✅ 已确认 {len(planned_tasks)} 个计划任务！")
+                            st.rerun()
+                
+                # 初始状态：显示原始确认按钮
+                else:
+                    submit_planned_tasks = st.form_submit_button(
+                        "✅ 确认计划任务",
+                        type="primary",
+                        use_container_width=True,
+                        help="确认并保存以上计划任务"
+                    )
+                    
+                    if submit_planned_tasks:
+                        if planned_tasks:
+                            # 验证任务时间不重叠
+                            time_conflicts = check_time_conflicts(planned_tasks, date)
+                            
+                            if time_conflicts:
+                                st.error("❌ 存在时间冲突的任务，请调整：")
+                                for conflict in time_conflicts:
+                                    st.error(f"- {conflict}")
+                            else:
+                                # 进入最终确认状态
+                                st.session_state.show_final_confirmation = True
+                                st.rerun()
+                        else:
+                            st.warning("⚠️ 请至少填写一个任务名称")
         
+
         # 显示今日时间线概览
         if planned_tasks:
             st.subheader("📅 今日计划时间线")
@@ -204,6 +320,9 @@ if page == "今日记录":
             timeline_data = []
             current_date = date
             
+            if planned_tasks and st.session_state.tasks_confirmed:
+                st.info("🔒 计划任务已确认锁定")
+
             for task in planned_tasks:
                 start_dt = datetime.combine(current_date, datetime.strptime(task['planned_start_time'], '%H:%M').time())
                 end_dt = datetime.combine(current_date, datetime.strptime(task['planned_end_time'], '%H:%M').time())
