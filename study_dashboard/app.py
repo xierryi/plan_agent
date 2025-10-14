@@ -76,9 +76,6 @@ primary_color = "#1f77b4"
 def calculate_duration(start_time, end_time):
     """计算两个时间之间的时长（分钟）"""
     if start_time and end_time:
-        if end_time < start_time:
-            # 如果结束时间在开始时间之前，假设是跨天的情况
-            end_time += timedelta(days=1)
         duration = (end_time - start_time).total_seconds() / 60
         return max(0, int(duration))
     return 0
@@ -102,8 +99,12 @@ if page == "今日记录":
         
         st.subheader("今日计划任务")
         planned_tasks = []
-        
-        with st.expander("添加计划任务", expanded=True):
+
+        # 初始化展开状态
+        if 'expander_expanded' not in st.session_state:
+            st.session_state.expander_expanded = True
+
+        with st.expander("添加计划任务", expanded=st.session_state.expander_expanded):
             task_count = st.number_input("任务数量", min_value=1, max_value=10, value=3)
             
             for i in range(task_count):
@@ -175,26 +176,7 @@ if page == "今日记录":
                         st.rerun()  # 重新运行以更新界面
 
                 with col6:
-                    # 计算并显示时长
-                    start_dt = datetime.combine(date, start_time)
-                    end_dt = datetime.combine(date, end_time)
-                    calculated_duration = calculate_duration(start_dt, end_dt)
-                    
-                    # 自动更新session state
-                    st.session_state.task_times[i] = {
-                        'start_time': start_time,
-                        'end_time': end_time,
-                        'calculated_duration': calculated_duration
-                    }
-                    
-                    # 显示时长（只读）
-                    st.text_input(
-                        "时长", 
-                        value=f"{calculated_duration}分钟",
-                        key=f"duration_display_{i}",
-                        label_visibility="collapsed",
-                        disabled=True
-                    )
+                    st.write("")  # 占位
 
                 with col7:
                     st.write("")  # 占位
@@ -217,10 +199,15 @@ if page == "今日记录":
                 with col_labels[4]:
                     st.caption("结束时间")
                 with col_labels[5]:
-                    st.caption("时长")
+                    st.write("")
                 with col_labels[6]:
-                    st.caption("操作")
-                
+                    st.write("")
+
+                # 计算时长
+                start_dt = datetime.combine(date, start_time)
+                end_dt = datetime.combine(date, end_time)
+                calculated_duration = calculate_duration(start_dt, end_dt)
+
                 if task_name:
                     planned_tasks.append({
                         "task_id": i+1,
@@ -284,6 +271,7 @@ if page == "今日记录":
                             st.session_state.tasks_confirmed = True
                             st.session_state.show_final_confirmation = False
                             st.success(f"✅ 已确认 {len(planned_tasks)} 个计划任务！")
+                            st.session_state.expander_expanded = False
                             st.rerun()
                 
                 # 初始状态：显示原始确认按钮
@@ -306,31 +294,27 @@ if page == "今日记录":
                                     st.error(f"- {conflict}")
                             else:
                                 # 进入最终确认状态
-                                st.session_state.show_final_confirmation = True
+                                st.session_state.show_final_confirmation = True                               
                                 st.rerun()
                         else:
                             st.warning("⚠️ 请至少填写一个任务名称")
         
 
         # 显示今日时间线概览
-        if planned_tasks:
+        if planned_tasks and st.session_state.tasks_confirmed:
             st.subheader("📅 今日计划时间线")
-            
+            # st.expander("添加计划任务", expanded=False)
+
             # 创建时间线数据
             timeline_data = []
             current_date = date
             
-            if planned_tasks and st.session_state.tasks_confirmed:
-                st.info("🔒 计划任务已确认锁定")
 
             for task in planned_tasks:
                 start_dt = datetime.combine(current_date, datetime.strptime(task['planned_start_time'], '%H:%M').time())
                 end_dt = datetime.combine(current_date, datetime.strptime(task['planned_end_time'], '%H:%M').time())
-                
-                # 处理跨天情况
-                if end_dt < start_dt:
-                    end_dt += timedelta(days=1)
-                
+                calculated_duration = calculate_duration(start_dt, end_dt)
+
                 timeline_data.append({
                     'Task': task['task_name'],
                     'Start': start_dt,
@@ -339,6 +323,9 @@ if page == "今日记录":
                     'Subject': task['subject'],
                     'Difficulty': task['difficulty']
                 })
+
+            # 按照开始时间排序
+            timeline_data.sort(key=lambda x: x['Start'])
             
             # 显示时间线表格
             if timeline_data:
@@ -364,92 +351,94 @@ if page == "今日记录":
                 total_planned = sum(task['planned_duration'] for task in planned_tasks)
                 st.info(f"📊 今日总计划学习时间: {total_planned}分钟 ({total_planned/60:.1f}小时)")
         
-        st.subheader("实际执行情况")
-        actual_execution = []
-        
-        for i, task in enumerate(planned_tasks):
-            st.markdown(f"**{task['task_name']}**")
-            
-            # 执行情况输入 - 使用紧凑布局
-            col1, col2, col3, col4 = st.columns([2, 2, 2, 2])
-            with col1:
-                completed = st.checkbox("已完成", value=True, key=f"completed_{i}")
-            with col2:
-                # 实际时长可以调整，默认为计划时长
-                actual_duration = st.number_input(
-                    "实际时长", 
-                    min_value=0, 
-                    max_value=480, 
-                    value=task['planned_duration'], 
-                    key=f"actual_dur_{i}"
-                )
-            with col3:
-                interruptions = st.number_input(
-                    "中断次数", 
-                    min_value=0, 
-                    max_value=10, 
-                    value=0,
-                    key=f"inter_{i}"
-                )
-            with col4:
-                task_energy = st.select_slider(
-                    "任务后精力", 
-                    options=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 
-                    value=7,
-                    key=f"energy_{i}"
-                )
-            
-            if completed:
-                actual_execution.append({
-                    "task_id": task['task_id'],
-                    "actual_duration": actual_duration,
-                    "actual_focus_duration": int(actual_duration * 0.8),
-                    "interruptions": interruptions,
-                    "post_energy": task_energy,
-                    "completed": True
-                })
-            
-            st.markdown("---")
-        
-        # 提交按钮
-        submitted = st.form_submit_button("💾 保存今日记录")
-        if submitted:
-            if planned_tasks:
-                # 计算每日摘要
-                planned_total = sum(t['planned_duration'] for t in planned_tasks)
-                actual_total = sum(t['actual_duration'] for t in actual_execution) if actual_execution else 0
-                completion_rate = len(actual_execution) / len(planned_tasks) if planned_tasks else 0
-                
-                daily_summary = {
-                    "planned_total_time": planned_total,
-                    "actual_total_time": actual_total,
-                    "planned_focus_time": sum(t['planned_focus_duration'] for t in planned_tasks),
-                    "actual_focus_time": sum(t['actual_focus_duration'] for t in actual_execution) if actual_execution else 0,
-                    "completion_rate": completion_rate,
-                    "reflection": st.text_area("今日反思", placeholder="今天的收获和改进点...", key="reflection")
-                }
-                
-                # 保存数据
-                success = data_manager.add_daily_record(
-                    date.strftime("%Y-%m-%d"),
-                    weather,
-                    energy_level,
-                    planned_tasks,
-                    actual_execution,
-                    daily_summary
-                )
-                
-                if success:
-                    st.success("✅ 今日记录保存成功！")
-                    # 清空时间记录
-                    st.session_state.task_times = {}
-                    st.balloons()
-                else:
-                    st.error("❌ 保存失败，请检查数据格式")
-            else:
-                st.error("❌ 请至少添加一个计划任务")
+            st.subheader("实际执行情况")
+            actual_execution = []
 
-# 其他页面保持不变...
+            # 按照开始时间排序
+            sorted_tasks = sorted(planned_tasks, key=lambda x: datetime.strptime(x['planned_start_time'], '%H:%M'))
+
+            for i, task in enumerate(sorted_tasks):
+                st.markdown(f"**{task['task_name']}**")
+                
+                # 执行情况输入 - 使用紧凑布局
+                col1, col2, col3, col4 = st.columns([2, 2, 2, 2])
+                with col1:
+                    completed = st.checkbox("已完成", value=True, key=f"completed_{i}")
+                with col2:
+                    # 实际时长可以调整，默认为计划时长
+                    actual_duration = st.number_input(
+                        "实际时长", 
+                        min_value=0, 
+                        max_value=480, 
+                        value=task['planned_duration'], 
+                        key=f"actual_dur_{i}"
+                    )
+                with col3:
+                    interruptions = st.number_input(
+                        "中断次数", 
+                        min_value=0, 
+                        max_value=10, 
+                        value=0,
+                        key=f"inter_{i}"
+                    )
+                with col4:
+                    task_energy = st.select_slider(
+                        "任务后精力", 
+                        options=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 
+                        value=7,
+                        key=f"energy_{i}"
+                    )
+                
+                if completed:
+                    actual_execution.append({
+                        "task_id": task['task_id'],
+                        "actual_duration": actual_duration,
+                        "actual_focus_duration": int(actual_duration * 0.8),
+                        "interruptions": interruptions,
+                        "post_energy": task_energy,
+                        "completed": True
+                    })
+                
+                st.markdown("---")
+            
+            # 提交按钮
+            submitted = st.form_submit_button("💾 保存今日记录")
+            if submitted:
+                if planned_tasks:
+                    # 计算每日摘要
+                    planned_total = sum(t['planned_duration'] for t in planned_tasks)
+                    actual_total = sum(t['actual_duration'] for t in actual_execution) if actual_execution else 0
+                    completion_rate = len(actual_execution) / len(planned_tasks) if planned_tasks else 0
+                    
+                    daily_summary = {
+                        "planned_total_time": planned_total,
+                        "actual_total_time": actual_total,
+                        "planned_focus_time": sum(t['planned_focus_duration'] for t in planned_tasks),
+                        "actual_focus_time": sum(t['actual_focus_duration'] for t in actual_execution) if actual_execution else 0,
+                        "completion_rate": completion_rate,
+                        "reflection": st.text_area("今日反思", placeholder="今天的收获和改进点...", key="reflection")
+                    }
+                    
+                    # 保存数据
+                    success = data_manager.add_daily_record(
+                        date.strftime("%Y-%m-%d"),
+                        weather,
+                        energy_level,
+                        sorted_tasks, # 使用排序后的任务
+                        actual_execution,
+                        daily_summary
+                    )
+                    
+                    if success:
+                        st.success("✅ 今日记录保存成功！")
+                        # 清空时间记录
+                        st.session_state.task_times = {}
+                        st.balloons()
+                    else:
+                        st.error("❌ 保存失败，请检查数据格式")
+                else:
+                    st.error("❌ 请至少添加一个计划任务")
+
 elif page == "数据看板":
     st.title("📊 学习数据看板")
     
