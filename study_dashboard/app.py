@@ -4,6 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import json
+import time
 from data_manager import StudyDataManager
 from study_agent import StudyAgent
 
@@ -361,44 +362,83 @@ if page == "今日记录":
                 st.markdown(f"**{task['task_name']}**")
                 
                 # 执行情况输入 - 使用紧凑布局
-                col1, col2, col3, col4 = st.columns([2, 2, 2, 2])
+                col1, col2, col3 = st.columns([2, 2, 2])
+                
                 with col1:
-                    completed = st.checkbox("已完成", value=True, key=f"completed_{i}")
-                with col2:
-                    # 实际时长可以调整，默认为计划时长
-                    actual_duration = st.number_input(
-                        "实际时长", 
-                        min_value=0, 
-                        max_value=480, 
-                        value=task['planned_duration'], 
-                        key=f"actual_dur_{i}"
-                    )
-                with col3:
-                    interruptions = st.number_input(
-                        "中断次数", 
-                        min_value=0, 
-                        max_value=10, 
-                        value=0,
-                        key=f"inter_{i}"
-                    )
-                with col4:
-                    task_energy = st.select_slider(
-                        "任务后精力", 
-                        options=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 
-                        value=7,
-                        key=f"energy_{i}"
+                    # 初始化实际开始时间（只在第一次运行时）
+                    #start_key = f'actual_start_{i}'
+                    #if start_key not in st.session_state:
+                    #    st.session_state[start_key] = datetime.strptime(task['planned_start_time'], '%H:%M').time()
+                    
+                    actual_start_time = st.time_input(
+                        "实际开始时间",
+                        value=datetime.strptime(task['planned_start_time'], '%H:%M').time(),
+                        key=f"actual_start_{i}",  # 使用不同的key
+                        step=300
                     )
                 
-                if completed:
+                with col2:
+                    # 获取当前实际结束时间值
+                    current_actual_end_time = st.session_state.get(f"actual_end_{i}", datetime.strptime(task['planned_end_time'], '%H:%M').time())
+                    
+                    # 如果实际结束时间在实际开始时间之前，自动调整
+                    start_dt = datetime.combine(date, actual_start_time)
+                    end_dt = datetime.combine(date, current_actual_end_time)
+                    
+                    actual_end_time = st.time_input(
+                        "实际结束时间",
+                        value=current_actual_end_time,
+                        key=f"actual_end_{i}",
+                        step=300,
+                    )
+                    
+                    # 实时验证
+                    start_dt = datetime.combine(date, actual_start_time)
+                    end_dt = datetime.combine(date, actual_end_time)
+                    
+                    if end_dt <= start_dt:
+                        st.error("❌ 实际结束时间必须在实际开始时间之后")
+                        # 强制调整
+                        time.sleep(0.1)  # 确保状态更新
+                        st.rerun()  # 重新运行以更新界面
+
+
+                with col3:
+                    # 初始化精力水平
+                    energy_key = f'energy_{i}'
+                    if energy_key not in st.session_state:
+                        st.session_state[energy_key] = 7
+                        
+                    task_energy = st.select_slider(
+                        "结束后精力", 
+                        options=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 
+                        value=st.session_state[energy_key],
+                        key=f"energy_input_{i}"  # 使用不同的key
+                    )
+
+                # 计算实际时长（只有在时间有效时）
+                start_dt = datetime.combine(date, actual_start_time)
+                end_dt = datetime.combine(date, actual_end_time)
+                
+                if start_dt < end_dt:
+                    actual_duration = calculate_duration(start_dt, end_dt)
+                    
+                    # 显示实际时长信息
+                    st.caption(f"实际学习时长: {actual_duration}分钟")
+                    
+                    # 添加到执行记录
                     actual_execution.append({
                         "task_id": task['task_id'],
+                        "actual_start_time": actual_start_time.strftime('%H:%M'),
+                        "actual_end_time": actual_end_time.strftime('%H:%M'),
                         "actual_duration": actual_duration,
                         "actual_focus_duration": int(actual_duration * 0.8),
-                        "interruptions": interruptions,
                         "post_energy": task_energy,
                         "completed": True
                     })
-                
+                else:
+                    st.warning("⚠️ 请调整时间以确保结束时间在开始时间之后")
+
                 st.markdown("---")
             
             # 提交按钮
