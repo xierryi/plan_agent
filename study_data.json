@@ -6,7 +6,7 @@
     "planned_tasks": [
       {
         "task_id": 1,
-        "task_name": "1",
+        "task_name": "312",
         "subject": "math",
         "planned_duration": 60,
         "planned_focus_duration": 48,
@@ -34,7 +34,7 @@
       "completion_rate": 1.0,
       "reflection": ""
     },
-    "created_at": "2025-10-27T11:51:04.661621",
-    "updated_at": "2025-10-27T11:51:04.661634"
+    "created_at": "2025-10-27T11:54:37.923137",
+    "updated_at": "2025-10-27T11:54:37.923149"
   }
 ]
