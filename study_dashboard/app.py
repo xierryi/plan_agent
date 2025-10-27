@@ -58,8 +58,34 @@ st.set_page_config(
     page_title="学习分析仪表板",
     page_icon="📚",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"  # 手机端默认收起侧边栏
 )
+
+st.set_page_config(
+    page_title="学习分析系统",
+    page_icon="📚",
+    layout="wide",
+    initial_sidebar_state="collapsed"  # 手机端默认收起侧边栏
+)
+
+# 添加移动端检测和优化
+def is_mobile():
+    """检测是否为移动设备"""
+    user_agent = st.query_params.get("user_agent", "")
+    mobile_keywords = ['mobile', 'android', 'iphone', 'ipad']
+    return any(keyword in user_agent.lower() for keyword in mobile_keywords)
+
+if is_mobile():
+    st.markdown("""
+    <style>
+    .main > div {
+        padding: 0rem 1rem;
+    }
+    .sidebar .sidebar-content {
+        width: 100%;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
 # 初始化管理器
 @st.cache_resource
