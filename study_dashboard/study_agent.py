@@ -7,6 +7,7 @@ except ImportError:
 import os
 import logging
 from dotenv import load_dotenv
+from openai import OpenAI
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -41,7 +42,7 @@ safe_load_dotenv()
 
 class StudyAgent:
     def __init__(self):
-        self.llm = ChatOpenAI(
+        self.llm = OpenAI(
             temperature=0.3,
             model="gpt-3.5-turbo",
             openai_api_key=os.getenv('OPENAI_API_KEY')
