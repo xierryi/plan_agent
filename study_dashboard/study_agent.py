@@ -1,6 +1,9 @@
 import json
-from langchain_openai import ChatOpenAI
-from langchain.schema import HumanMessage, SystemMessage
+try:
+    from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
+except ImportError:
+    # 兼容旧版本
+    from langchain.schema import BaseMessage, HumanMessage, SystemMessage
 import os
 import logging
 from dotenv import load_dotenv
