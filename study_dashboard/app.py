@@ -13,6 +13,15 @@ except ImportError as e:
     st.error(f"导入错误: {e}")
     st.info("请确保 requirements.txt 包含所有必要的依赖包")
     st.stop()
+# 在导入部分修改
+try:
+    from github_manager import GitHubDataManager
+    data_manager = GitHubDataManager()
+except ImportError:
+    from data_manager import StudyDataManager
+    data_manager = StudyDataManager()
+
+# 移除原有的 @st.cache_resource 装饰器
 
 def check_time_conflicts(planned_tasks, date):
     """检查任务时间是否重叠"""
@@ -89,19 +98,38 @@ if is_mobile():
 
 # 初始化管理器
 @st.cache_resource
-def get_data_manager():
-    return StudyDataManager()
-
-@st.cache_resource
 def get_agent():
     return StudyAgent()
 
-data_manager = get_data_manager()
 agent = get_agent()
 
 # 侧边栏导航
 st.sidebar.title("📚 学习分析系统")
-page = st.sidebar.selectbox("导航", ["今日记录", "数据看板", "智能分析", "历史数据"])
+page = st.sidebar.selectbox("导航", ["今日记录", "数据看板", "智能分析", "历史数据", "GitHub设置"])
+
+st.sidebar.markdown("---")
+st.sidebar.subheader("🔄 数据同步")
+
+if hasattr(data_manager, 'get_sync_status'):
+    sync_status = data_manager.get_sync_status()
+    
+    if sync_status['connected']:
+        st.sidebar.success("✅ GitHub 已连接")
+        st.sidebar.write(f"仓库: `{sync_status['repo_info']}`")
+        st.sidebar.write(f"记录数: {sync_status['data_count']}")
+        
+        if sync_status['last_sync']:
+            from datetime import datetime
+            last_sync = datetime.fromisoformat(sync_status['last_sync'])
+            st.sidebar.write(f"最后同步: {last_sync.strftime('%m-%d %H:%M')}")
+        
+        if st.sidebar.button("🔄 强制同步"):
+            if data_manager.force_sync():
+                st.sidebar.success("同步成功!")
+                st.rerun()
+    else:
+        st.sidebar.warning("⚠️ 使用本地存储")
+        st.sidebar.info("配置 GitHub Token 启用云端同步")
 
 # 主题颜色
 primary_color = "#1f77b4"
@@ -636,6 +664,89 @@ elif page == "历史数据":
             
             st.subheader("💭 当日反思")
             st.info(summary.get('reflection', '暂无反思记录'))
+# 添加 GitHub 设置页面
+elif page == "GitHub设置":
+    st.title("⚙️ GitHub 数据存储设置")
+    
+    st.markdown("""
+    ## 📚 使用 GitHub 作为数据库
+    
+    将你的学习数据存储在 GitHub 仓库中，实现：
+    - 🔄 **多设备同步** - 在任何地方访问你的数据
+    - 💾 **版本控制** - 自动记录所有更改历史
+    - 🆓 **完全免费** - 使用 GitHub 的免费额度
+    - 🔒 **数据安全** - 你的数据受 GitHub 保护
+    """)
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("🛠️ 配置步骤")
+        
+        st.markdown("""
+        1. **创建 GitHub Personal Token**
+           - 访问 [GitHub Settings → Tokens](https://github.com/settings/tokens)
+           - 点击 "Generate new token"
+           - 选择 "repo" 权限
+           - 复制生成的 token
+        
+        2. **配置 Streamlit Secrets**
+           - 在 Streamlit Cloud 点击 "Manage app"
+           - 进入 "Settings" → "Secrets"
+           - 添加以下配置：
+        """)
+        
+        st.code("""GITHUB_TOKEN=ghp_你的token
+GITHUB_OWNER=你的用户名
+GITHUB_REPO=仓库名""", language="ini")
+    
+    with col2:
+        st.subheader("🔍 当前状态")
+        
+        if hasattr(data_manager, 'get_sync_status'):
+            status = data_manager.get_sync_status()
+            
+            if status['connected']:
+                st.success("✅ GitHub 连接正常")
+                st.metric("数据记录", status['data_count'])
+                st.metric("仓库", status['repo_info'])
+                
+                if status['last_sync']:
+                    from datetime import datetime
+                    last_sync = datetime.fromisoformat(status['last_sync'])
+                    st.write(f"最后同步: {last_sync.strftime('%Y-%m-%d %H:%M:%S')}")
+                
+                # 数据操作
+                st.subheader("📊 数据操作")
+                
+                all_data = data_manager.load_all_data()
+                if all_data:
+                    # 导出数据
+                    json_data = json.dumps(all_data, ensure_ascii=False, indent=2)
+                    st.download_button(
+                        "💾 导出完整数据",
+                        data=json_data,
+                        file_name=f"study_data_backup_{datetime.now().strftime('%Y%m%d')}.json",
+                        help="下载完整的 JSON 数据备份"
+                    )
+                    
+                    # 查看数据文件
+                    if st.button("🔍 查看 GitHub 数据文件"):
+                        repo_url = f"https://github.com/{status['repo_info']}/blob/main/study_data.json"
+                        st.markdown(f"[📁 在 GitHub 中查看数据文件]({repo_url})")
+                
+            else:
+                st.warning("⚠️ 未连接 GitHub")
+                st.info("请按照左侧步骤配置 GitHub Token")
+        
+        st.subheader("🔄 手动同步")
+        if st.button("强制同步到 GitHub"):
+            with st.spinner("同步中..."):
+                if data_manager.force_sync():
+                    st.success("✅ 同步成功!")
+                    st.rerun()
+                else:
+                    st.error("❌ 同步失败")
 
 # 运行说明
 st.sidebar.markdown("---")
