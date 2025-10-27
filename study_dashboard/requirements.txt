@@ -1,6 +1,6 @@
-streamlit
-pandas
-plotly
-langchain-openai
-langchain
-python-dotenv
+streamlit>=1.28.0
+pandas>=2.0.0
+plotly>=5.15.0
+openai>=1.0.0
+python-dotenv>=1.0.0
+numpy>=1.21.0

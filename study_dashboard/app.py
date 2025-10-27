@@ -1,12 +1,18 @@
 import streamlit as st
-import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
-from datetime import datetime, timedelta
-import json
-import time
-from data_manager import StudyDataManager
-from study_agent import StudyAgent
+try:
+    import pandas as pd
+    import plotly.express as px
+    import plotly.graph_objects as go
+    from datetime import datetime, timedelta
+    import json
+    import time
+    import numpy as np
+    from data_manager import StudyDataManager
+    from study_agent import StudyAgent
+except ImportError as e:
+    st.error(f"导入错误: {e}")
+    st.info("请确保 requirements.txt 包含所有必要的依赖包")
+    st.stop()
 
 def check_time_conflicts(planned_tasks, date):
     """检查任务时间是否重叠"""
@@ -152,14 +158,6 @@ if page == "今日记录":
                     # 获取当前结束时间值
                     current_end_time = st.session_state.get(f"end_{i}", datetime.now().time().replace(hour=10, minute=0))
                     
-                    # 如果结束时间在开始时间之前，自动调整
-                    if current_end_time <= start_time:
-                        # 自动设置为开始时间+30分钟
-                        adjusted_end = (datetime.combine(date, start_time) + timedelta(minutes=30)).time()
-                        # 更新session state
-                        st.session_state[f"end_{i}"] = adjusted_end
-                        current_end_time = adjusted_end
-                    
                     end_time = st.time_input(
                         "结束时间", 
                         value=current_end_time,
@@ -171,9 +169,7 @@ if page == "今日记录":
                     # 实时验证
                     if end_time <= start_time:
                         st.error("❌ 结束时间必须在开始时间之后")
-                        # 强制调整
-                        forced_end = (datetime.combine(date, start_time) + timedelta(minutes=30)).time()
-                        st.session_state[f"end_{i}"] = forced_end
+                        time.sleep(0.1)  # 确保状态更新
                         st.rerun()  # 重新运行以更新界面
 
                 with col6:
@@ -247,7 +243,6 @@ if page == "今日记录":
                 elif st.session_state.show_final_confirmation:
                     # 显示最终确认区域
                     st.warning("⚠️ 请最终确认计划任务")
-                    st.info("确认后将无法再修改计划任务")
                     
                     confirm_col1, confirm_col2, confirm_col3 = st.columns([1, 1, 1])
                     with confirm_col1:
@@ -359,12 +354,13 @@ if page == "今日记录":
             sorted_tasks = sorted(planned_tasks, key=lambda x: datetime.strptime(x['planned_start_time'], '%H:%M'))
 
             for i, task in enumerate(sorted_tasks):
-                st.markdown(f"**{task['task_name']}**")
-                
                 # 执行情况输入 - 使用紧凑布局
-                col1, col2, col3 = st.columns([2, 2, 2])
+                col1, col2, col3, col4, col5 = st.columns([2, 2, 2, 2, 2])
                 
                 with col1:
+                    st.markdown(f"##### {task['task_name']}")
+
+                with col2:
                     # 初始化实际开始时间（只在第一次运行时）
                     #start_key = f'actual_start_{i}'
                     #if start_key not in st.session_state:
@@ -374,36 +370,36 @@ if page == "今日记录":
                         "实际开始时间",
                         value=datetime.strptime(task['planned_start_time'], '%H:%M').time(),
                         key=f"actual_start_{i}",  # 使用不同的key
-                        step=300
+                        step=300,
+                        label_visibility="collapsed"
                     )
                 
-                with col2:
+                with col3:
                     # 获取当前实际结束时间值
                     current_actual_end_time = st.session_state.get(f"actual_end_{i}", datetime.strptime(task['planned_end_time'], '%H:%M').time())
-                    
-                    # 如果实际结束时间在实际开始时间之前，自动调整
-                    start_dt = datetime.combine(date, actual_start_time)
-                    end_dt = datetime.combine(date, current_actual_end_time)
                     
                     actual_end_time = st.time_input(
                         "实际结束时间",
                         value=current_actual_end_time,
                         key=f"actual_end_{i}",
                         step=300,
+                        label_visibility="collapsed"
                     )
                     
-                    # 实时验证
-                    start_dt = datetime.combine(date, actual_start_time)
-                    end_dt = datetime.combine(date, actual_end_time)
-                    
-                    if end_dt <= start_dt:
+                    if actual_end_time <= actual_start_time:
                         st.error("❌ 实际结束时间必须在实际开始时间之后")
-                        # 强制调整
                         time.sleep(0.1)  # 确保状态更新
                         st.rerun()  # 重新运行以更新界面
 
+                with col4:
+                    # 计算实际时长
+                    start_dt = datetime.combine(date, actual_start_time)
+                    end_dt = datetime.combine(date, actual_end_time)
+                    actual_duration = calculate_duration(start_dt, end_dt)
+                    
+                    st.markdown(f"##### {actual_duration}分钟")
 
-                with col3:
+                with col5:
                     # 初始化精力水平
                     energy_key = f'energy_{i}'
                     if energy_key not in st.session_state:
@@ -413,19 +409,22 @@ if page == "今日记录":
                         "结束后精力", 
                         options=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 
                         value=st.session_state[energy_key],
-                        key=f"energy_input_{i}"  # 使用不同的key
+                        key=f"energy_input_{i}",  # 使用不同的key
+                        label_visibility="collapsed"
                     )
+                col_labels = st.columns([2, 2, 2, 2, 2])
+                with col_labels[0]:
+                    st.caption("任务名称")
+                with col_labels[1]:
+                    st.caption("实际开始时间")
+                with col_labels[2]:
+                    st.caption("实际结束时间")
+                with col_labels[3]:
+                    st.caption("实际学习时长")
+                with col_labels[4]:
+                    st.caption("结束后精力")
 
-                # 计算实际时长（只有在时间有效时）
-                start_dt = datetime.combine(date, actual_start_time)
-                end_dt = datetime.combine(date, actual_end_time)
-                
-                if start_dt < end_dt:
-                    actual_duration = calculate_duration(start_dt, end_dt)
-                    
-                    # 显示实际时长信息
-                    st.caption(f"实际学习时长: {actual_duration}分钟")
-                    
+                if start_dt < end_dt:                    
                     # 添加到执行记录
                     actual_execution.append({
                         "task_id": task['task_id'],
@@ -441,9 +440,19 @@ if page == "今日记录":
 
                 st.markdown("---")
             
+            reflctions = st.text_area("今日反思", placeholder="今天的收获和改进点...", key="reflection")
+            
             # 提交按钮
-            submitted = st.form_submit_button("💾 保存今日记录")
-            if submitted:
+            if 'tasks_saved' not in st.session_state:
+                st.session_state.tasks_saved = False
+
+            if st.session_state.tasks_saved:
+                st.success("✅ 今日记录已保存，不可再修改")
+                # 显示禁用的按钮
+                disabled_btn = st.form_submit_button(
+                    "✅ 今日记录已保存",
+                    disabled=True
+                )
                 if planned_tasks:
                     # 计算每日摘要
                     planned_total = sum(t['planned_duration'] for t in planned_tasks)
@@ -456,7 +465,7 @@ if page == "今日记录":
                         "planned_focus_time": sum(t['planned_focus_duration'] for t in planned_tasks),
                         "actual_focus_time": sum(t['actual_focus_duration'] for t in actual_execution) if actual_execution else 0,
                         "completion_rate": completion_rate,
-                        "reflection": st.text_area("今日反思", placeholder="今天的收获和改进点...", key="reflection")
+                        "reflection": reflctions
                     }
                     
                     # 保存数据
@@ -470,7 +479,6 @@ if page == "今日记录":
                     )
                     
                     if success:
-                        st.success("✅ 今日记录保存成功！")
                         # 清空时间记录
                         st.session_state.task_times = {}
                         st.balloons()
@@ -478,6 +486,13 @@ if page == "今日记录":
                         st.error("❌ 保存失败，请检查数据格式")
                 else:
                     st.error("❌ 请至少添加一个计划任务")
+
+            else:
+                submitted = st.form_submit_button("💾 保存今日记录")
+                if submitted:
+                    st.session_state.tasks_saved = True
+                    st.rerun()
+                            
 
 elif page == "数据看板":
     st.title("📊 学习数据看板")
