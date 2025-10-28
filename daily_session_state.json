@@ -99,6 +99,69 @@
         "actual_focus_duration": 96,
         "post_energy": 7,
         "completed": true
+      },
+      {
+        "task_id": 2,
+        "actual_start_time": "11:00",
+        "actual_end_time": "11:50",
+        "actual_duration": 50,
+        "actual_focus_duration": 40,
+        "post_energy": 7,
+        "completed": true
+      },
+      {
+        "task_id": 3,
+        "actual_start_time": "13:00",
+        "actual_end_time": "14:00",
+        "actual_duration": 60,
+        "actual_focus_duration": 48,
+        "post_energy": 7,
+        "completed": true
+      },
+      {
+        "task_id": 4,
+        "actual_start_time": "14:00",
+        "actual_end_time": "15:00",
+        "actual_duration": 60,
+        "actual_focus_duration": 48,
+        "post_energy": 7,
+        "completed": true
+      },
+      {
+        "task_id": 5,
+        "actual_start_time": "15:00",
+        "actual_end_time": "16:00",
+        "actual_duration": 60,
+        "actual_focus_duration": 48,
+        "post_energy": 7,
+        "completed": true
+      },
+      {
+        "task_id": 6,
+        "actual_start_time": "16:00",
+        "actual_end_time": "17:00",
+        "actual_duration": 60,
+        "actual_focus_duration": 48,
+        "post_energy": 7,
+        "completed": true
+      },
+      {
+        "task_id": 7,
+        "actual_start_time": "17:00",
+        "actual_end_time": "17:30",
+        "actual_duration": 30,
+        "actual_focus_duration": 24,
+        "post_energy": 7,
+        "completed": true
+      },
+      {
+        "task_id": 8,
+        "actual_start_time": "18:30",
+        "actual_end_time": "19:30",
+        "actual_duration": 60,
+        "actual_focus_duration": 48,
+        "post_energy": 7,
+        "completed": true
       }
     ],
     "time_inputs_cache": {
@@ -120,9 +183,30 @@
       "end_7": "19:30:00",
       "actual_start_0": "08:20:00",
       "actual_end_0": "10:20:00",
-      "energy_0": 7
+      "energy_0": 7,
+      "actual_start_1": "11:00:00",
+      "actual_end_1": "11:50:00",
+      "energy_1": 7,
+      "actual_start_2": "13:00:00",
+      "actual_end_2": "14:00:00",
+      "energy_2": 7,
+      "actual_start_3": "14:00:00",
+      "actual_end_3": "15:00:00",
+      "energy_3": 7,
+      "actual_start_4": "15:00:00",
+      "actual_end_4": "16:00:00",
+      "energy_4": 7,
+      "actual_start_5": "16:00:00",
+      "actual_end_5": "17:00:00",
+      "energy_5": 7,
+      "actual_start_6": "17:00:00",
+      "actual_end_6": "17:30:00",
+      "energy_6": 7,
+      "actual_start_7": "18:30:00",
+      "actual_end_7": "19:30:00",
+      "energy_7": 7
     },
-    "last_auto_save": "2025-10-28T20:49:03.292491+08:00",
+    "last_auto_save": "2025-10-28T20:55:29.411215+08:00",
     "state_date": "2025-10-28"
   }
 }
