@@ -3,7 +3,7 @@ try:
     import pandas as pd
     import plotly.express as px
     import plotly.graph_objects as go
-    from datetime import datetime, timedelta
+    from datetime import datetime, timedelta, time
     import json
     import time
     import numpy as np
@@ -574,14 +574,14 @@ if page == "今日记录":
                     if actual_start_cache_key in time_inputs_cache:
                         default_actual_start = time_inputs_cache[actual_start_cache_key]
                     elif 'actual_start_time' in saved_actual:
-                        if isinstance(saved_actual['actual_start_time'], time):
-                            default_actual_start = saved_actual['actual_start_time']
-                        else:
-                            try:
-                                # 如果是字符串才解析
+                        try:
+                            # 如果是字符串就解析，如果是time对象就直接使用
+                            if isinstance(saved_actual['actual_start_time'], str):
                                 default_actual_start = datetime.strptime(saved_actual['actual_start_time'], '%H:%M').time()
-                            except (ValueError, TypeError):
-                                default_actual_start = datetime.strptime(task['planned_start_time'], '%H:%M').time()
+                            else:
+                                default_actual_start = saved_actual['actual_start_time']
+                        except:
+                            default_actual_start = datetime.strptime(task['planned_start_time'], '%H:%M').time()
                     else:
                         default_actual_start = datetime.strptime(task['planned_start_time'], '%H:%M').time()
                     
