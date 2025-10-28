@@ -28,6 +28,16 @@
         "difficulty": 3,
         "planned_start_time": "10:05",
         "planned_end_time": "11:10"
+      },
+      {
+        "task_id": 3,
+        "task_name": "在干嘛",
+        "subject": "math",
+        "planned_duration": 125,
+        "planned_focus_duration": 100,
+        "difficulty": 3,
+        "planned_start_time": "11:30",
+        "planned_end_time": "13:35"
       }
     ],
     "actual_execution": [],
@@ -36,10 +46,10 @@
       "end_0": "10:00:00",
       "start_1": "10:05:00",
       "end_1": "11:10:00",
-      "start_2": "09:00:03",
-      "end_2": "10:00:03"
+      "start_2": "11:30:00",
+      "end_2": "13:35:00"
     },
-    "last_auto_save": "2025-10-28T05:16:19.777228",
+    "last_auto_save": "2025-10-28T05:16:21.237210",
     "state_date": "2025-10-28"
   }
 }
