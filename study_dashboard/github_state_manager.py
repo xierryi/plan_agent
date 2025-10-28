@@ -328,14 +328,25 @@ class GitHubStateManager:
                 # 转换时间字符串为 time 对象
                 if 'planned_start_time' in restored_task and isinstance(restored_task['planned_start_time'], str):
                     try:
-                        restored_task['planned_start_time'] = datetime.strptime(restored_task['planned_start_time'], '%H:%M').time()
+                        time_str = restored_task['planned_start_time']
+                        # 支持 HH:MM 和 HH:MM:SS 格式
+                        if ':' in time_str:
+                            parts = time_str.split(':')
+                            if len(parts) >= 2:
+                                # 只取小时和分钟
+                                restored_task['planned_start_time'] = datetime.strptime(f"{parts[0]}:{parts[1]}", '%H:%M').time()
                     except ValueError:
-                        pass
+                        # 如果解析失败，设置为默认时间
+                        restored_task['planned_start_time'] = datetime.strptime("09:00", '%H:%M').time()
                 if 'planned_end_time' in restored_task and isinstance(restored_task['planned_end_time'], str):
                     try:
-                        restored_task['planned_end_time'] = datetime.strptime(restored_task['planned_end_time'], '%H:%M').time()
+                        time_str = restored_task['planned_end_time']
+                        if ':' in time_str:
+                            parts = time_str.split(':')
+                            if len(parts) >= 2:
+                                restored_task['planned_end_time'] = datetime.strptime(f"{parts[0]}:{parts[1]}", '%H:%M').time()
                     except ValueError:
-                        pass
+                        restored_task['planned_end_time'] = datetime.strptime("10:00", '%H:%M').time()
                 restored_planned_tasks.append(restored_task)
             
             st.session_state.planned_tasks = restored_planned_tasks
@@ -348,14 +359,22 @@ class GitHubStateManager:
                 # 转换时间字符串为 time 对象
                 if 'actual_start_time' in restored_execution and isinstance(restored_execution['actual_start_time'], str):
                     try:
-                        restored_execution['actual_start_time'] = datetime.strptime(restored_execution['actual_start_time'], '%H:%M').time()
+                        time_str = restored_execution['actual_start_time']
+                        if ':' in time_str:
+                            parts = time_str.split(':')
+                            if len(parts) >= 2:
+                                restored_execution['actual_start_time'] = datetime.strptime(f"{parts[0]}:{parts[1]}", '%H:%M').time()
                     except ValueError:
-                        pass
+                        restored_execution['actual_start_time'] = datetime.strptime("09:00", '%H:%M').time()
                 if 'actual_end_time' in restored_execution and isinstance(restored_execution['actual_end_time'], str):
                     try:
-                        restored_execution['actual_end_time'] = datetime.strptime(restored_execution['actual_end_time'], '%H:%M').time()
+                        time_str = restored_execution['actual_end_time']
+                        if ':' in time_str:
+                            parts = time_str.split(':')
+                            if len(parts) >= 2:
+                                restored_execution['actual_end_time'] = datetime.strptime(f"{parts[0]}:{parts[1]}", '%H:%M').time()
                     except ValueError:
-                        pass
+                        restored_execution['actual_end_time'] = datetime.strptime("10:00", '%H:%M').time()
                 restored_actual_execution.append(restored_execution)
             
             st.session_state.actual_execution = restored_actual_execution
@@ -366,12 +385,11 @@ class GitHubStateManager:
             for key, value in time_inputs_cache.items():
                 if isinstance(value, str) and ':' in value:
                     try:
-                        restored_time_cache[key] = datetime.strptime(value, '%H:%M:%S').time()
+                        parts = value.split(':')
+                        if len(parts) >= 2:
+                            restored_time_cache[key] = datetime.strptime(f"{parts[0]}:{parts[1]}", '%H:%M').time()
                     except ValueError:
-                        try:
-                            restored_time_cache[key] = datetime.strptime(value, '%H:%M').time()
-                        except ValueError:
-                            restored_time_cache[key] = value
+                        restored_time_cache[key] = value
                 else:
                     restored_time_cache[key] = value
             
