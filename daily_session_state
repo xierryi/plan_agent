@@ -1,7 +1,7 @@
 {
   "2025-10-28": {
     "tasks_confirmed": false,
-    "show_final_confirmation": false,
+    "show_final_confirmation": true,
     "tasks_saved": false,
     "expander_expanded": true,
     "current_date": "2025-10-28",
@@ -11,7 +11,7 @@
     "planned_tasks": [
       {
         "task_id": 1,
-        "task_name": "ntdrn",
+        "task_name": "53525",
         "subject": "math",
         "planned_duration": 60,
         "planned_focus_duration": 48,
@@ -29,7 +29,7 @@
       "start_2": "09:00:00",
       "end_2": "10:00:00"
     },
-    "last_auto_save": "2025-10-28T06:32:02.916241",
+    "last_auto_save": "2025-10-28T06:42:29.628388",
     "state_date": "2025-10-28"
   }
 }
