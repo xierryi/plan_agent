@@ -186,49 +186,59 @@ def create_state_sidebar():
 create_state_sidebar()
 
 # 页面1: 今日记录
+# 页面1: 今日记录
 if page == "今日记录":
     st.title("📝 今日学习记录")
 
     with st.form("daily_record"):
         col1, col2, col3 = st.columns(3)
         with col1:
+            # 修复：在表单内部获取 session_state 值
+            current_date_value = st.session_state.get('current_date', datetime.now().date())
             current_date = st.date_input(
                 "日期", 
-                st.session_state.current_date,
+                value=current_date_value,
                 key="date_input"
             )
             # 自动保存日期变化
-            if current_date != st.session_state.current_date:
+            if current_date != st.session_state.get('current_date'):
                 st.session_state.current_date = current_date
                 github_state_manager.auto_save_state()
                 
         with col2:
+            # 修复：在表单内部获取 session_state 值
+            current_weather_value = st.session_state.get('current_weather', "晴")
+            weather_options = ["晴", "多云", "雨", "阴", "雪"]
+            current_weather_index = weather_options.index(current_weather_value) if current_weather_value in weather_options else 0
+            
             current_weather = st.selectbox(
                 "天气", 
-                ["晴", "多云", "雨", "阴", "雪"],
-                index=["晴", "多云", "雨", "阴", "雪"].index(st.session_state.current_weather),
+                weather_options,
+                index=current_weather_index,
                 key="weather_input"
             )
-            if current_weather != st.session_state.current_weather:
+            if current_weather != st.session_state.get('current_weather'):
                 st.session_state.current_weather = current_weather
                 github_state_manager.auto_save_state()
                 
         with col3:
+            # 修复：在表单内部获取 session_state 值
+            current_energy_level_value = st.session_state.get('current_energy_level', 7)
             current_energy_level = st.slider(
                 "精力水平", 1, 10, 
-                st.session_state.current_energy_level,
+                value=current_energy_level_value,
                 key="energy_input"
             )
-            if current_energy_level != st.session_state.current_energy_level:
+            if current_energy_level != st.session_state.get('current_energy_level'):
                 st.session_state.current_energy_level = current_energy_level
                 github_state_manager.auto_save_state()
         
         st.subheader("今日计划任务")
         planned_tasks = []
 
-        with st.expander("添加计划任务", expanded=st.session_state.expander_expanded):
+        with st.expander("添加计划任务", expanded=st.session_state.get('expander_expanded', True)):
             # 动态调整任务数量
-            current_task_count = max(3, len(st.session_state.planned_tasks))
+            current_task_count = max(3, len(st.session_state.get('planned_tasks', [])))
             task_count = st.number_input("任务数量", min_value=1, max_value=10, value=current_task_count)
             
             for i in range(task_count):
@@ -238,7 +248,7 @@ if page == "今日记录":
                 col1, col2, col3, col4, col5, col6, col7 = st.columns([2, 1.5, 1.5, 1.5, 1.5, 1.5, 1])
                 
                 # 从保存的数据中获取默认值
-                saved_task = st.session_state.planned_tasks[i] if i < len(st.session_state.planned_tasks) else {}
+                saved_task = st.session_state.get('planned_tasks', [])[i] if i < len(st.session_state.get('planned_tasks', [])) else {}
                 
                 with col1:
                     task_name = st.text_input(
@@ -277,8 +287,9 @@ if page == "今日记录":
                 with col4:
                     # 从缓存或保存数据获取开始时间
                     start_cache_key = f"start_{i}"
-                    if start_cache_key in st.session_state.time_inputs_cache:
-                        default_start = st.session_state.time_inputs_cache[start_cache_key]
+                    time_inputs_cache = st.session_state.get('time_inputs_cache', {})
+                    if start_cache_key in time_inputs_cache:
+                        default_start = time_inputs_cache[start_cache_key]
                     elif 'planned_start_time' in saved_task:
                         default_start = datetime.strptime(saved_task['planned_start_time'], '%H:%M').time()
                     else:
@@ -292,13 +303,15 @@ if page == "今日记录":
                         label_visibility="collapsed"
                     )
                     # 缓存时间值
+                    st.session_state.time_inputs_cache = st.session_state.get('time_inputs_cache', {})
                     st.session_state.time_inputs_cache[start_cache_key] = start_time
                 
                 with col5:
                     # 从缓存或保存数据获取结束时间
                     end_cache_key = f"end_{i}"
-                    if end_cache_key in st.session_state.time_inputs_cache:
-                        default_end = st.session_state.time_inputs_cache[end_cache_key]
+                    time_inputs_cache = st.session_state.get('time_inputs_cache', {})
+                    if end_cache_key in time_inputs_cache:
+                        default_end = time_inputs_cache[end_cache_key]
                     elif 'planned_end_time' in saved_task:
                         default_end = datetime.strptime(saved_task['planned_end_time'], '%H:%M').time()
                     else:
@@ -311,6 +324,7 @@ if page == "今日记录":
                         step=300,
                         label_visibility="collapsed"
                     )
+                    st.session_state.time_inputs_cache = st.session_state.get('time_inputs_cache', {})
                     st.session_state.time_inputs_cache[end_cache_key] = end_time
                     
                     if end_time <= start_time:
@@ -328,7 +342,6 @@ if page == "今日记录":
 
                 with col7:
                     st.write("")
-                    
                 
                 # 标签说明
                 col_labels = st.columns([2, 1.5, 1.5, 1.5, 1.5, 1.5, 1])
@@ -365,10 +378,12 @@ if page == "今日记录":
                     }
                     
                     # 更新或添加任务数据
-                    if i < len(st.session_state.planned_tasks):
-                        st.session_state.planned_tasks[i] = task_data
+                    planned_tasks = st.session_state.get('planned_tasks', [])
+                    if i < len(planned_tasks):
+                        planned_tasks[i] = task_data
                     else:
-                        st.session_state.planned_tasks.append(task_data)
+                        planned_tasks.append(task_data)
+                    st.session_state.planned_tasks = planned_tasks
                     
                     github_state_manager.auto_save_state()
                 
@@ -377,14 +392,14 @@ if page == "今日记录":
             # 计划任务确认逻辑
             col1, col2, col3 = st.columns([1, 2, 1])
             with col2:
-                if st.session_state.tasks_confirmed:
+                if st.session_state.get('tasks_confirmed', False):
                     st.success("✅ 计划任务已确认，不可再修改")
                     disabled_btn = st.form_submit_button(
                         "✅ 计划任务已确认",
                         disabled=True,
                         use_container_width=True
                     )
-                elif st.session_state.show_final_confirmation:
+                elif st.session_state.get('show_final_confirmation', False):
                     st.warning("⚠️ 请最终确认计划任务")
                     
                     confirm_col1, confirm_col2, confirm_col3 = st.columns([1, 1, 1])
@@ -420,8 +435,9 @@ if page == "今日记录":
                     )
                     
                     if submit_planned_tasks:
-                        if st.session_state.planned_tasks:
-                            time_conflicts = check_time_conflicts(st.session_state.planned_tasks, current_date)
+                        planned_tasks = st.session_state.get('planned_tasks', [])
+                        if planned_tasks:
+                            time_conflicts = check_time_conflicts(planned_tasks, current_date)
                             if time_conflicts:
                                 st.error("❌ 存在时间冲突的任务，请调整：")
                                 for conflict in time_conflicts:
@@ -434,12 +450,13 @@ if page == "今日记录":
                             st.warning("⚠️ 请至少填写一个任务名称")
 
         # 显示今日时间线概览
-        if st.session_state.planned_tasks and st.session_state.tasks_confirmed:
+        if st.session_state.get('planned_tasks') and st.session_state.get('tasks_confirmed'):
             st.subheader("📅 今日计划时间线")
             
             # 创建时间线数据
             timeline_data = []
-            for task in st.session_state.planned_tasks:
+            planned_tasks = st.session_state.get('planned_tasks', [])
+            for task in planned_tasks:
                 start_dt = datetime.combine(current_date, datetime.strptime(task['planned_start_time'], '%H:%M').time())
                 end_dt = datetime.combine(current_date, datetime.strptime(task['planned_end_time'], '%H:%M').time())
                 
@@ -476,19 +493,21 @@ if page == "今日记录":
                 )
                 
                 # 显示总时长统计
-                total_planned = sum(task['planned_duration'] for task in st.session_state.planned_tasks)
+                total_planned = sum(task['planned_duration'] for task in planned_tasks)
                 st.info(f"📊 今日总计划学习时间: {total_planned}分钟 ({total_planned/60:.1f}小时)")
         
         # 实际执行情况
-        if st.session_state.planned_tasks and st.session_state.tasks_confirmed:
+        if st.session_state.get('planned_tasks') and st.session_state.get('tasks_confirmed'):
             st.subheader("实际执行情况")
             
             # 按照开始时间排序
-            sorted_tasks = sorted(st.session_state.planned_tasks, key=lambda x: datetime.strptime(x['planned_start_time'], '%H:%M'))
+            planned_tasks = st.session_state.get('planned_tasks', [])
+            sorted_tasks = sorted(planned_tasks, key=lambda x: datetime.strptime(x['planned_start_time'], '%H:%M'))
 
             for i, task in enumerate(sorted_tasks):
                 # 从保存数据中获取实际执行信息
-                saved_actual = st.session_state.actual_execution[i] if i < len(st.session_state.actual_execution) else {}
+                actual_execution = st.session_state.get('actual_execution', [])
+                saved_actual = actual_execution[i] if i < len(actual_execution) else {}
                 
                 # 执行情况输入 - 使用紧凑布局
                 col1, col2, col3, col4, col5 = st.columns([2, 2, 2, 2, 2])
@@ -499,8 +518,9 @@ if page == "今日记录":
                 with col2:
                     # 获取实际开始时间
                     actual_start_cache_key = f"actual_start_{i}"
-                    if actual_start_cache_key in st.session_state.time_inputs_cache:
-                        default_actual_start = st.session_state.time_inputs_cache[actual_start_cache_key]
+                    time_inputs_cache = st.session_state.get('time_inputs_cache', {})
+                    if actual_start_cache_key in time_inputs_cache:
+                        default_actual_start = time_inputs_cache[actual_start_cache_key]
                     elif 'actual_start_time' in saved_actual:
                         default_actual_start = datetime.strptime(saved_actual['actual_start_time'], '%H:%M').time()
                     else:
@@ -513,13 +533,15 @@ if page == "今日记录":
                         step=300,
                         label_visibility="collapsed"
                     )
+                    st.session_state.time_inputs_cache = st.session_state.get('time_inputs_cache', {})
                     st.session_state.time_inputs_cache[actual_start_cache_key] = actual_start_time
                 
                 with col3:
                     # 获取实际结束时间
                     actual_end_cache_key = f"actual_end_{i}"
-                    if actual_end_cache_key in st.session_state.time_inputs_cache:
-                        default_actual_end = st.session_state.time_inputs_cache[actual_end_cache_key]
+                    time_inputs_cache = st.session_state.get('time_inputs_cache', {})
+                    if actual_end_cache_key in time_inputs_cache:
+                        default_actual_end = time_inputs_cache[actual_end_cache_key]
                     elif 'actual_end_time' in saved_actual:
                         default_actual_end = datetime.strptime(saved_actual['actual_end_time'], '%H:%M').time()
                     else:
@@ -532,6 +554,7 @@ if page == "今日记录":
                         step=300,
                         label_visibility="collapsed"
                     )
+                    st.session_state.time_inputs_cache = st.session_state.get('time_inputs_cache', {})
                     st.session_state.time_inputs_cache[actual_end_cache_key] = actual_end_time
                     
                     if actual_end_time <= actual_start_time:
@@ -551,8 +574,9 @@ if page == "今日记录":
                 with col5:
                     # 获取精力水平
                     energy_cache_key = f"energy_{i}"
-                    if energy_cache_key in st.session_state.time_inputs_cache:
-                        default_energy = st.session_state.time_inputs_cache[energy_cache_key]
+                    time_inputs_cache = st.session_state.get('time_inputs_cache', {})
+                    if energy_cache_key in time_inputs_cache:
+                        default_energy = time_inputs_cache[energy_cache_key]
                     elif 'post_energy' in saved_actual:
                         default_energy = saved_actual['post_energy']
                     else:
@@ -565,6 +589,7 @@ if page == "今日记录":
                         key=f"energy_input_{i}",
                         label_visibility="collapsed"
                     )
+                    st.session_state.time_inputs_cache = st.session_state.get('time_inputs_cache', {})
                     st.session_state.time_inputs_cache[energy_cache_key] = task_energy
                 
                 # 标签说明
@@ -593,10 +618,12 @@ if page == "今日记录":
                     }
                     
                     # 更新或添加实际执行数据
-                    if i < len(st.session_state.actual_execution):
-                        st.session_state.actual_execution[i] = actual_data
+                    actual_execution = st.session_state.get('actual_execution', [])
+                    if i < len(actual_execution):
+                        actual_execution[i] = actual_data
                     else:
-                        st.session_state.actual_execution.append(actual_data)
+                        actual_execution.append(actual_data)
+                    st.session_state.actual_execution = actual_execution
                     
                     github_state_manager.auto_save_state()
                 else:
@@ -605,18 +632,19 @@ if page == "今日记录":
                 st.markdown("---")
             
             # 反思框
+            current_reflection_value = st.session_state.get('current_reflection', "")
             current_reflection = st.text_area(
                 "今日反思", 
-                value=st.session_state.current_reflection,
+                value=current_reflection_value,
                 placeholder="今天的收获和改进点...", 
                 key="reflection_input"
             )
-            if current_reflection != st.session_state.current_reflection:
+            if current_reflection != st.session_state.get('current_reflection'):
                 st.session_state.current_reflection = current_reflection
                 github_state_manager.auto_save_state()
             
             # 最终提交按钮
-            if st.session_state.tasks_saved:
+            if st.session_state.get('tasks_saved', False):
                 st.success("✅ 今日记录已保存，不可再修改")
                 disabled_btn = st.form_submit_button("✅ 今日记录已保存", disabled=True)
             else:
@@ -632,13 +660,13 @@ if page == "今日记录":
                             current_weather,
                             current_energy_level,
                             sorted_tasks,
-                            st.session_state.actual_execution,
+                            st.session_state.get('actual_execution', []),
                             {
-                                "planned_total_time": sum(t['planned_duration'] for t in st.session_state.planned_tasks),
-                                "actual_total_time": sum(t['actual_duration'] for t in st.session_state.actual_execution) if st.session_state.actual_execution else 0,
-                                "planned_focus_time": sum(t['planned_focus_duration'] for t in st.session_state.planned_tasks),
-                                "actual_focus_time": sum(t['actual_focus_duration'] for t in st.session_state.actual_execution) if st.session_state.actual_execution else 0,
-                                "completion_rate": len(st.session_state.actual_execution) / len(st.session_state.planned_tasks) if st.session_state.planned_tasks else 0,
+                                "planned_total_time": sum(t['planned_duration'] for t in st.session_state.get('planned_tasks', [])),
+                                "actual_total_time": sum(t['actual_duration'] for t in st.session_state.get('actual_execution', [])) if st.session_state.get('actual_execution') else 0,
+                                "planned_focus_time": sum(t['planned_focus_duration'] for t in st.session_state.get('planned_tasks', [])),
+                                "actual_focus_time": sum(t['actual_focus_duration'] for t in st.session_state.get('actual_execution', [])) if st.session_state.get('actual_execution') else 0,
+                                "completion_rate": len(st.session_state.get('actual_execution', [])) / len(st.session_state.get('planned_tasks', [])) if st.session_state.get('planned_tasks') else 0,
                                 "reflection": current_reflection
                             }
                         )
@@ -655,9 +683,9 @@ if page == "今日记录":
                     st.rerun()
 
         else:
-            if not st.session_state.planned_tasks:
+            if not st.session_state.get('planned_tasks'):
                 st.info("👆 请在上方添加和确认今日的计划任务")
-            elif not st.session_state.tasks_confirmed:
+            elif not st.session_state.get('tasks_confirmed'):
                 st.info("👆 请先确认今日的计划任务")
                             
 
