@@ -442,7 +442,7 @@ if page == "今日记录":
                     
                     while len(planned_tasks) <= i:
                         planned_tasks.append({})
-                        
+
                     planned_tasks[i] = task_data
                     st.session_state.planned_tasks = planned_tasks
                     
@@ -483,12 +483,18 @@ if page == "今日记录":
                             use_container_width=True
                         )
                         if final_confirm:
-                            st.session_state.tasks_confirmed = True
-                            st.session_state.show_final_confirmation = False
-                            st.session_state.expander_expanded = False
-                            # github_state_manager.auto_save_staFalse)  # 关键操作，强制保存
-                            st.success(f"✅ 已确认 {len(st.session_state.planned_tasks)} 个计划任务！")
-                            st.rerun()
+                            time_conflicts = check_time_conflicts(planned_tasks, current_date)
+                            if time_conflicts:
+                                st.error("❌ 存在时间冲突的任务，请调整：")
+                                for conflict in time_conflicts:
+                                    st.error(f"- {conflict}")
+                            else:
+                                st.session_state.tasks_confirmed = True
+                                st.session_state.show_final_confirmation = False
+                                st.session_state.expander_expanded = False
+                                # github_state_manager.auto_save_staFalse)  # 关键操作，强制保存
+                                st.success(f"✅ 已确认 {len(st.session_state.planned_tasks)} 个计划任务！")
+                                st.rerun()
                 else:
                     submit_planned_tasks = st.form_submit_button(
                         "✅ 确认计划任务",
