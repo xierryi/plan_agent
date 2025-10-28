@@ -943,6 +943,61 @@ GITHUB_REPO=仓库名""", language="ini")
                     st.rerun()
                 else:
                     st.error("❌ 同步失败")
+                    
+    st.markdown("---")
+    st.subheader("🗑️ 数据清理")
+    
+    # 显示数据统计
+    stats = github_state_manager.get_data_stats()
+    col1, col2, col3, col4, col5 = st.columns(5)
+    with col1:
+        st.metric("状态数据", stats['state_count'])
+    with col2:
+        st.metric("学习记录", stats['study_data_count'])
+    with col3:
+        st.metric("旧状态数据", stats['old_states'])
+    with col4:
+        st.metric("旧学习记录", stats['old_study_data'])
+    with col5:
+        st.metric("缓存大小", f"{stats['cache_size']}B")
+    
+    # 清理选项
+    st.markdown("#### 清理选项")
+    
+    tab1, tab2, tab3 = st.tabs(["清理旧数据", "清除缓存", "清除所有数据"])
+    
+    with tab1:
+        st.markdown("**清理指定天数前的数据**")
+        days_to_keep = st.slider("保留最近多少天的数据", 7, 365, 30, key="days_keep")
+        if st.button("🧹 清理旧数据", key="clean_old", help=f"删除{days_to_keep}天前的数据"):
+            if github_state_manager.cleanup_data(days_to_keep=days_to_keep):
+                st.rerun()
+    
+    with tab2:
+        st.markdown("**只清除缓存数据**")
+        st.info("这将清除时间输入缓存和除今天外的所有状态数据")
+        if st.button("🔄 清除缓存", key="clear_cache"):
+            if github_state_manager.cleanup_data(clear_cache=True):
+                st.rerun()
+    
+    with tab3:
+        st.markdown("**清除所有数据（危险操作）**")
+        st.warning("⚠️ 这将删除所有学习记录、状态数据和缓存，此操作不可恢复！")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            confirm1 = st.checkbox("我理解此操作会永久删除所有数据", key="confirm1")
+        with col2:
+            confirm2 = st.checkbox("我确认要执行此操作", key="confirm2")
+        
+        if confirm1 and confirm2:
+            if st.button("🗑️ 确认删除所有数据", type="primary", key="delete_all"):
+                if github_state_manager.cleanup_data(clear_all=True):
+                    st.rerun()
+        else:
+            st.button("🗑️ 确认删除所有数据", disabled=True)
+    
+    st.info("💡 建议定期清理缓存和旧数据以保持应用性能")
 
 # 运行说明
 st.sidebar.markdown("---")
