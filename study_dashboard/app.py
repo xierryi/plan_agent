@@ -698,6 +698,9 @@ if page == "今日记录":
 
                 st.markdown("---")
             
+            # 暂存按钮
+            st.form_submit_button("💾 暂存当前进度", use_container_width=True)
+
             # 反思框
             current_reflection_value = st.session_state.get('current_reflection', "")
             current_reflection = st.text_area(
