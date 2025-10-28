@@ -52,47 +52,48 @@ class GitHubStateManager:
         self.initialized = True
     
     def auto_save_state(self, force=False):
-        """智能保存状态到 GitHub"""
+        """智能保存状态到 GitHub（避免保存空状态）"""
         try:
-            # 频率控制：避免过于频繁的保存
+            # 检查是否是空状态，避免保存无意义数据
+            if not force and self._is_empty_state():
+                return False
+                
+            # 频率控制
             current_time = datetime.now()
             if (self.last_save_time and 
                 current_time - self.last_save_time < self.min_save_interval and 
                 not force):
-                return False  # 跳过保存
+                return False
             
             # 检查是否有实际数据变化
             current_state_hash = self._get_state_hash()
             if (not force and 
                 self.last_state_hash and 
                 current_state_hash == self.last_state_hash):
-                return False  # 状态没有变化，跳过保存
-            
+                return False
+
             # 确保所有必要的属性都存在
             self._ensure_session_state_initialized()
             
             today = datetime.now().date().isoformat()
             
-            # 检查是否是同一天，如果不是则清除旧状态
+            # 检查是否是同一天
             if st.session_state.get('state_date') != today:
                 self._clear_previous_day_state()
                 st.session_state.state_date = today
                 force = True
             
-            # 只有在有实际数据变化或强制保存时才保存
-            if force or self._has_meaningful_changes():
-                save_data = self._prepare_save_data()
-                success = self._save_to_github(today, save_data)
+            save_data = self._prepare_save_data()
+            success = self._save_to_github(today, save_data)
+            
+            if success:
+                st.session_state.last_auto_save = current_time
+                self.last_save_time = current_time
+                self.last_state_hash = current_state_hash
                 
-                if success:
-                    st.session_state.last_auto_save = current_time
-                    self.last_save_time = current_time
-                    self.last_state_hash = current_state_hash
-                    
-                    # 只在调试模式下显示成功信息
-                    if st.session_state.get('debug_mode', False):
-                        st.sidebar.success("💾 状态已智能保存")
-                    return True
+                if st.session_state.get('debug_mode', False):
+                    st.sidebar.success("💾 状态已智能保存")
+                return True
             
             return False
                     
@@ -100,6 +101,32 @@ class GitHubStateManager:
             if st.session_state.get('debug_mode', False):
                 st.sidebar.error(f"❌ 自动保存失败: {str(e)}")
             return False
+
+    def _is_empty_state(self):
+        """检查是否是空状态（没有用户数据）"""
+        # 检查是否有计划任务
+        planned_tasks = st.session_state.get('planned_tasks', [])
+        if planned_tasks:
+            for task in planned_tasks:
+                if task.get('task_name', '').strip():
+                    return False  # 有任务内容，不是空状态
+        
+        # 检查是否有实际执行数据
+        actual_execution = st.session_state.get('actual_execution', [])
+        if actual_execution:
+            return False  # 有执行数据，不是空状态
+        
+        # 检查是否有反思内容
+        if st.session_state.get('current_reflection', '').strip():
+            return False  # 有反思内容，不是空状态
+        
+        # 检查任务状态
+        if (st.session_state.get('tasks_confirmed', False) or 
+            st.session_state.get('tasks_saved', False)):
+            return False  # 有任务状态，不是空状态
+        
+        # 如果所有检查都通过，说明是空状态
+        return True
     
     def _get_state_hash(self):
         """生成状态哈希值，用于检测变化"""

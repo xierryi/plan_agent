@@ -9,6 +9,7 @@ try:
     import numpy as np
     from data_manager import StudyDataManager
     from study_agent import StudyAgent
+    import hashlib
     from github_state_manager import github_state_manager
 except ImportError as e:
     st.error(f"导入错误: {e}")
@@ -142,6 +143,24 @@ if hasattr(data_manager, 'get_sync_status'):
 # 主题颜色
 primary_color = "#1f77b4"
 
+def handle_page_refresh():
+    """处理页面刷新，确保状态正确恢复"""
+    today = datetime.now().date().isoformat()
+    
+    # 如果关键状态不存在，尝试从 GitHub 恢复
+    critical_states = ['planned_tasks', 'tasks_confirmed', 'current_date']
+    states_missing = any(state not in st.session_state for state in critical_states)
+    
+    if states_missing:
+        st.sidebar.info("🔄 检测到页面刷新，恢复状态中...")
+        if github_state_manager.load_from_github(today):
+            st.sidebar.success("✅ 状态恢复成功")
+            st.rerun()
+        else:
+            st.sidebar.info("📝 开始新的学习记录")
+
+# 调用刷新处理
+handle_page_refresh()
 # 在页面开始处初始化状态管理器
 github_state_manager.init_session_state()
 
@@ -207,30 +226,29 @@ def create_state_sidebar():
     
     # 在侧边栏底部添加调试信息
     with st.sidebar.expander("🔧 调试信息"):
-        # 保存模式信息
-        st.write("💡 保存模式: 智能保存")
-        st.write("📊 最小保存间隔: 10秒")
-        st.write("🔍 变化检测: 启用")
-        
-        state_info = github_state_manager.get_state_info()
-        st.write("GitHub 连接:", "✅ 已连接" if state_info['github_connected'] else "❌ 未连接")
-        st.write("状态日期:", state_info['state_date'])
-        st.write("计划任务数:", state_info['planned_task_count'])
-        st.write("任务确认:", state_info['tasks_confirmed'])
-        st.write("今日状态:", state_info['is_today'])
-        
-        # 调试模式开关
-        debug_mode = st.checkbox("调试模式", value=st.session_state.get('debug_mode', False))
-        st.session_state.debug_mode = debug_mode
-        
-        # 显示保存的状态文件内容（调试用）
-        if st.button("查看保存的状态"):
-            today = datetime.now().date().isoformat()
-            all_states = github_state_manager._load_all_states_from_github()
-            if today in all_states:
-                st.json(all_states[today])
-            else:
-                st.info("今天没有保存的状态")
+    state_info = github_state_manager.get_state_info()
+    st.write("GitHub 连接:", "✅ 已连接" if state_info['github_connected'] else "❌ 未连接")
+    st.write("状态日期:", state_info['state_date'])
+    st.write("计划任务数:", state_info['planned_task_count'])
+    st.write("任务确认:", state_info['tasks_confirmed'])
+    st.write("今日状态:", state_info['is_today'])
+    st.write("空状态检查:", "✅ 是" if github_state_manager._is_empty_state() else "❌ 否")
+    
+    # 显示保存的状态文件内容（调试用）
+    if st.button("查看GitHub保存的状态"):
+        today = datetime.now().date().isoformat()
+        all_states = github_state_manager._load_all_states_from_github()
+        if today in all_states:
+            st.json(all_states[today])
+            # 显示状态哈希对比
+            current_hash = github_state_manager._get_state_hash()
+            saved_data = all_states[today]
+            saved_hash = hashlib.md5(json.dumps(saved_data, sort_keys=True).encode()).hexdigest()
+            st.write("当前状态哈希:", current_hash[:8])
+            st.write("保存状态哈希:", saved_hash[:8])
+            st.write("状态一致:", current_hash == saved_hash)
+        else:
+            st.info("今天没有保存的状态")
 
 # 在页面中调用
 create_state_sidebar()
