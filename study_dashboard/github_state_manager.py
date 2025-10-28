@@ -108,26 +108,62 @@ class GitHubStateManager:
                 st.session_state[key] = default_value
     
     def _prepare_save_data(self):
-        """准备保存数据（排除不需要持久化的字段）"""
+        """准备保存数据（处理时间对象的序列化）"""
+        # 处理时间输入缓存中的时间对象
+        serializable_time_cache = {}
+        time_inputs_cache = st.session_state.get('time_inputs_cache', {})
+        
+        for key, value in time_inputs_cache.items():
+            if isinstance(value, time):  # 如果是 time 对象
+                serializable_time_cache[key] = value.strftime('%H:%M:%S')
+            else:
+                serializable_time_cache[key] = value
+        
+        # 处理 planned_tasks 中的时间对象
+        serializable_planned_tasks = []
+        planned_tasks = st.session_state.get('planned_tasks', [])
+        
+        for task in planned_tasks:
+            serializable_task = task.copy()
+            # 确保时间字段是字符串格式
+            if 'planned_start_time' in serializable_task and isinstance(serializable_task['planned_start_time'], time):
+                serializable_task['planned_start_time'] = serializable_task['planned_start_time'].strftime('%H:%M')
+            if 'planned_end_time' in serializable_task and isinstance(serializable_task['planned_end_time'], time):
+                serializable_task['planned_end_time'] = serializable_task['planned_end_time'].strftime('%H:%M')
+            serializable_planned_tasks.append(serializable_task)
+        
+        # 处理 actual_execution 中的时间对象
+        serializable_actual_execution = []
+        actual_execution = st.session_state.get('actual_execution', [])
+        
+        for execution in actual_execution:
+            serializable_execution = execution.copy()
+            # 确保时间字段是字符串格式
+            if 'actual_start_time' in serializable_execution and isinstance(serializable_execution['actual_start_time'], time):
+                serializable_execution['actual_start_time'] = serializable_execution['actual_start_time'].strftime('%H:%M')
+            if 'actual_end_time' in serializable_execution and isinstance(serializable_execution['actual_end_time'], time):
+                serializable_execution['actual_end_time'] = serializable_execution['actual_end_time'].strftime('%H:%M')
+            serializable_actual_execution.append(serializable_execution)
+        
         return {
             # 任务状态
-            'tasks_confirmed': st.session_state.tasks_confirmed,
-            'show_final_confirmation': st.session_state.show_final_confirmation,
-            'tasks_saved': st.session_state.tasks_saved,
-            'expander_expanded': st.session_state.expander_expanded,
+            'tasks_confirmed': st.session_state.get('tasks_confirmed', False),
+            'show_final_confirmation': st.session_state.get('show_final_confirmation', False),
+            'tasks_saved': st.session_state.get('tasks_saved', False),
+            'expander_expanded': st.session_state.get('expander_expanded', True),
             
             # 表单数据
-            'current_date': st.session_state.current_date.isoformat(),
-            'current_weather': st.session_state.current_weather,
-            'current_energy_level': st.session_state.current_energy_level,
-            'current_reflection': st.session_state.current_reflection,
+            'current_date': st.session_state.get('current_date', datetime.now().date()).isoformat(),
+            'current_weather': st.session_state.get('current_weather', "晴"),
+            'current_energy_level': st.session_state.get('current_energy_level', 7),
+            'current_reflection': st.session_state.get('current_reflection', ""),
             
-            # 任务数据
-            'planned_tasks': st.session_state.planned_tasks,
-            'actual_execution': st.session_state.actual_execution,
+            # 任务数据（使用处理后的可序列化版本）
+            'planned_tasks': serializable_planned_tasks,
+            'actual_execution': serializable_actual_execution,
             
-            # 时间数据缓存
-            'time_inputs_cache': st.session_state.time_inputs_cache,
+            # 时间数据缓存（使用处理后的可序列化版本）
+            'time_inputs_cache': serializable_time_cache,
             
             # 元数据
             'last_auto_save': datetime.now().isoformat(),
@@ -219,7 +255,7 @@ class GitHubStateManager:
             return False
     
     def _restore_from_data(self, data):
-        """从数据恢复状态"""
+        """从数据恢复状态（处理时间字符串的反序列化）"""
         if not data:
             return
             
@@ -237,10 +273,67 @@ class GitHubStateManager:
         st.session_state.current_energy_level = data.get('current_energy_level', 7)
         st.session_state.current_reflection = data.get('current_reflection', "")
         
-        # 恢复任务数据
-        st.session_state.planned_tasks = data.get('planned_tasks', [])
-        st.session_state.actual_execution = data.get('actual_execution', [])
-        st.session_state.time_inputs_cache = data.get('time_inputs_cache', {})
+        # 恢复任务数据（处理时间字符串）
+        planned_tasks = data.get('planned_tasks', [])
+        restored_planned_tasks = []
+        for task in planned_tasks:
+            restored_task = task.copy()
+            # 转换时间字符串为 time 对象
+            if 'planned_start_time' in restored_task and isinstance(restored_task['planned_start_time'], str):
+                try:
+                    restored_task['planned_start_time'] = datetime.strptime(restored_task['planned_start_time'], '%H:%M').time()
+                except ValueError:
+                    # 如果解析失败，保持原样
+                    pass
+            if 'planned_end_time' in restored_task and isinstance(restored_task['planned_end_time'], str):
+                try:
+                    restored_task['planned_end_time'] = datetime.strptime(restored_task['planned_end_time'], '%H:%M').time()
+                except ValueError:
+                    # 如果解析失败，保持原样
+                    pass
+            restored_planned_tasks.append(restored_task)
+        
+        st.session_state.planned_tasks = restored_planned_tasks
+        
+        # 恢复实际执行数据（处理时间字符串）
+        actual_execution = data.get('actual_execution', [])
+        restored_actual_execution = []
+        for execution in actual_execution:
+            restored_execution = execution.copy()
+            # 转换时间字符串为 time 对象
+            if 'actual_start_time' in restored_execution and isinstance(restored_execution['actual_start_time'], str):
+                try:
+                    restored_execution['actual_start_time'] = datetime.strptime(restored_execution['actual_start_time'], '%H:%M').time()
+                except ValueError:
+                    pass
+            if 'actual_end_time' in restored_execution and isinstance(restored_execution['actual_end_time'], str):
+                try:
+                    restored_execution['actual_end_time'] = datetime.strptime(restored_execution['actual_end_time'], '%H:%M').time()
+                except ValueError:
+                    pass
+            restored_actual_execution.append(restored_execution)
+        
+        st.session_state.actual_execution = restored_actual_execution
+        
+        # 恢复时间缓存（处理时间字符串）
+        time_inputs_cache = data.get('time_inputs_cache', {})
+        restored_time_cache = {}
+        for key, value in time_inputs_cache.items():
+            if isinstance(value, str) and ':' in value:
+                try:
+                    # 尝试解析时间字符串
+                    restored_time_cache[key] = datetime.strptime(value, '%H:%M:%S').time()
+                except ValueError:
+                    try:
+                        # 尝试另一种格式
+                        restored_time_cache[key] = datetime.strptime(value, '%H:%M').time()
+                    except ValueError:
+                        # 如果解析失败，保持原样
+                        restored_time_cache[key] = value
+            else:
+                restored_time_cache[key] = value
+        
+        st.session_state.time_inputs_cache = restored_time_cache
         
         # 恢复状态日期
         st.session_state.state_date = data.get('state_date', datetime.now().date().isoformat())
