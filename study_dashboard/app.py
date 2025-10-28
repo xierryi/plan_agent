@@ -234,13 +234,54 @@ def create_state_sidebar():
 # 在页面中调用
 create_state_sidebar()
 
+st.markdown("""
+    <style>
+    /* 减少所有元素的外边距 */
+    .main .block-container {
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+    }
+    
+    /* 减少标题间距 */
+    h1, h2, h3 {
+        margin-bottom: 0.25rem !important;
+        padding-top: 0.25rem !important;
+    }
+    
+    /* 减少Streamlit组件间距 */
+    .stTextInput, .stSelectbox, .stNumberInput, .stTimeInput, .stDateInput, .stSlider {
+        margin-bottom: 0.25rem !important;
+    }
+    
+    /* 减少按钮间距 */
+    .stButton {
+        margin-bottom: 0.25rem !important;
+    }
+    
+    /* 减少列间距 */
+    .row-widget.stColumns {
+        gap: 0.25rem !important;
+    }
+    
+    /* 减少展开器内边距 */
+    .streamlit-expanderHeader {
+        padding: 0.25rem 0.5rem !important;
+    }
+    
+    /* 减少表格间距 */
+    .stDataFrame {
+        margin: 0.25rem 0 !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 # 页面1: 今日记录
 if page == "今日记录":
-    st.title("📝 今日学习记录")
+    st.markdown(f"##### 📝 今日学习记录")
 
     with st.form("daily_record"):
         # === 基本信息区域 - 响应式3列布局 ===
-        st.header("📅 基本信息")
+        st.markdown(f"###### 📅 基本信息")
         
         info_cols = st.columns(3)
         with info_cols[0]:
@@ -250,6 +291,7 @@ if page == "今日记录":
             if current_date != st.session_state.get('current_date'):
                 st.session_state.current_date = current_date
                 github_state_manager.auto_save_state(force=False)
+                st.rerun()
                 
         with info_cols[1]:
             current_weather_value = st.session_state.get('current_weather', "晴")
@@ -266,10 +308,8 @@ if page == "今日记录":
             if current_energy_level != st.session_state.get('current_energy_level'):
                 st.session_state.current_energy_level = current_energy_level
         
-        st.markdown("---")
-        
         # === 计划任务区域 - 响应式设计 ===
-        st.header("📋 计划任务")
+        st.markdown(f"###### 📋 计划任务")
         planned_tasks = []
 
         with st.expander("添加计划任务", expanded=st.session_state.get('expander_expanded', True)):
@@ -278,7 +318,7 @@ if page == "今日记录":
             task_count = st.number_input("任务数量", min_value=1, max_value=8, value=current_task_count)
             
             for i in range(task_count):
-                st.subheader(f"任务 {i+1}")
+                st.markdown(f"###### 任务 {i+1}")
                 
                 # 从保存的数据中获取默认值
                 saved_task = st.session_state.get('planned_tasks', [])[i] if i < len(st.session_state.get('planned_tasks', [])) else {}
@@ -400,11 +440,9 @@ if page == "今日记录":
 
                     planned_tasks[i] = task_data
                     st.session_state.planned_tasks = planned_tasks
-                
-                st.markdown("---")
 
             # 计划任务确认逻辑 - 响应式按钮布局
-            st.subheader("确认计划")
+            st.markdown(f"###### 确认计划")
             if st.session_state.get('tasks_confirmed', False):
                 st.success("✅ 计划任务已确认，不可再修改")
                 st.form_submit_button("✅ 计划任务已确认", disabled=True, use_container_width=True)
@@ -465,7 +503,7 @@ if page == "今日记录":
 
         # === 时间线概览 - 响应式表格 ===
         if st.session_state.get('planned_tasks') and st.session_state.get('tasks_confirmed'):
-            st.header("📅 今日计划时间线")
+            st.markdown(f"##### 📅 今日计划时间线")
             
             # 创建时间线数据
             timeline_data = []
@@ -512,14 +550,13 @@ if page == "今日记录":
         
         # === 实际执行情况 - 响应式设计 ===
         if st.session_state.get('planned_tasks') and st.session_state.get('tasks_confirmed'):
-            st.header("✅ 实际执行情况")
-            
+            st.markdown(f"##### ✅ 实际执行情况")
             # 按照开始时间排序
             planned_tasks = st.session_state.get('planned_tasks', [])
             sorted_tasks = sorted(planned_tasks, key=lambda x: datetime.strptime(x['planned_start_time'], '%H:%M'))
 
             for i, task in enumerate(sorted_tasks):
-                st.subheader(task['task_name'])
+                st.markdown(f"##### {task['task_name']}")
                 
                 # 从保存数据中获取实际执行信息
                 actual_execution = st.session_state.get('actual_execution', [])
@@ -609,7 +646,7 @@ if page == "今日记录":
                     start_dt = datetime.combine(current_date, actual_start_time)
                     end_dt = datetime.combine(current_date, actual_end_time)
                     actual_duration = calculate_duration(start_dt, end_dt)
-                    st.metric("实际学习时长", f"{actual_duration}分钟")
+                    st.markdown(f"##### 实际学习时长: {actual_duration}分钟")
 
                 # 保存实际执行数据
                 if start_dt < end_dt:                    
@@ -635,12 +672,10 @@ if page == "今日记录":
                     github_state_manager.auto_save_state()
                 else:
                     st.warning("⚠️ 请调整时间以确保结束时间在开始时间之后")
-
-                st.markdown("---")
             
             # === 反思和操作区域 ===
-            st.header("📝 学习反思")
-            
+            st.markdown(f"##### 📝 学习反思")
+
             # 暂存按钮
             st.form_submit_button("💾 暂存当前进度", use_container_width=True)
             
@@ -659,7 +694,7 @@ if page == "今日记录":
                 github_state_manager.auto_save_state()
             
             # 最终提交按钮
-            st.header("完成记录")
+            st.markdown(f"##### 完成记录")
             if st.session_state.get('tasks_saved', False):
                 st.success("✅ 今日记录已保存，不可再修改")
                 st.form_submit_button("✅ 今日记录已保存", disabled=True, use_container_width=True)
