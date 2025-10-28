@@ -6,8 +6,6 @@ import streamlit as st
 from github import Github, GithubException
 import pandas as pd
 
-datetime.now = lambda: __import__('datetime').datetime.now(__import__('pytz').timezone('Asia/Shanghai'))
-
 class GitHubDataManager:
     def __init__(self):
         self.repo_owner = None

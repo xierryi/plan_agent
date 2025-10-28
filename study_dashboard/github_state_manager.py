@@ -3,8 +3,10 @@ import streamlit as st
 import json
 from datetime import datetime, time, timedelta
 from github_manager import GitHubDataManager
+import pytz
 
-datetime.now = lambda: __import__('datetime').datetime.now(__import__('pytz').timezone('Asia/Shanghai'))
+# 北京时区
+beijing_tz = pytz.timezone('Asia/Shanghai')
 
 class GitHubStateManager:
     """使用 GitHub 作为持久化存储的状态管理器 - 仅保留当天状态"""
@@ -23,7 +25,7 @@ class GitHubStateManager:
             return
             
         # 先尝试从 GitHub 加载当天状态
-        today = datetime.now().date().isoformat()
+        today = datetime.now(beijing_tz).date().isoformat()
         
         # 强制从 GitHub 加载状态
         if self.load_from_github(today):
@@ -37,7 +39,7 @@ class GitHubStateManager:
             'show_final_confirmation': False,
             'tasks_saved': False,
             'expander_expanded': True,
-            'current_date': datetime.now().date(),
+            'current_date': datetime.now(beijing_tz).date(),
             'current_weather': "晴",
             'current_energy_level': 7,
             'current_reflection': "",
@@ -63,7 +65,7 @@ class GitHubStateManager:
                 return False
                 
             # 频率控制
-            current_time = datetime.now()
+            current_time = datetime.now(beijing_tz)
             if (self.last_save_time and 
                 current_time - self.last_save_time < self.min_save_interval and 
                 not force):
@@ -79,7 +81,7 @@ class GitHubStateManager:
             # 确保所有必要的属性都存在
             self._ensure_session_state_initialized()
             
-            today = datetime.now().date().isoformat()
+            today = datetime.now(beijing_tz).date().isoformat()
             
             # 检查是否是同一天
             if st.session_state.get('state_date') != today:
@@ -150,14 +152,14 @@ class GitHubStateManager:
             'show_final_confirmation': False,
             'tasks_saved': False,
             'expander_expanded': True,
-            'current_date': datetime.now().date(),
+            'current_date': datetime.now(beijing_tz).date(),
             'current_weather': "晴",
             'current_energy_level': 7,
             'current_reflection': "",
             'planned_tasks': [],
             'actual_execution': [],
             'time_inputs_cache': {},
-            'state_date': datetime.now().date().isoformat()
+            'state_date': datetime.now(beijing_tz).date().isoformat()
         }
         
         for key, default_value in required_states.items():
@@ -205,15 +207,15 @@ class GitHubStateManager:
             'show_final_confirmation': st.session_state.get('show_final_confirmation', False),
             'tasks_saved': st.session_state.get('tasks_saved', False),
             'expander_expanded': st.session_state.get('expander_expanded', True),
-            'current_date': st.session_state.get('current_date', datetime.now().date()).isoformat(),
+            'current_date': st.session_state.get('current_date', datetime.now(beijing_tz).date()).isoformat(),
             'current_weather': st.session_state.get('current_weather', "晴"),
             'current_energy_level': st.session_state.get('current_energy_level', 7),
             'current_reflection': st.session_state.get('current_reflection', ""),
             'planned_tasks': serializable_planned_tasks,
             'actual_execution': serializable_actual_execution,
             'time_inputs_cache': serializable_time_cache,
-            'last_auto_save': datetime.now().isoformat(),
-            'state_date': st.session_state.get('state_date', datetime.now().date().isoformat())
+            'last_auto_save': datetime.now(beijing_tz).isoformat(),
+            'state_date': st.session_state.get('state_date', datetime.now(beijing_tz).date().isoformat())
         }
     
     def _save_to_github(self, date_key, data):
@@ -264,7 +266,7 @@ class GitHubStateManager:
                     # 更新文件
                     self.github_manager.repo.update_file(
                         self.state_key,
-                        f"更新会话状态 {datetime.now().strftime('%Y-%m-%d %H:%M')}",
+                        f"更新会话状态 {datetime.now(beijing_tz).strftime('%Y-%m-%d %H:%M')}",
                         content,
                         contents.sha
                     )
@@ -272,7 +274,7 @@ class GitHubStateManager:
                     # 创建新文件
                     self.github_manager.repo.create_file(
                         self.state_key,
-                        f"创建会话状态 {datetime.now().strftime('%Y-%m-%d %H:%M')}",
+                        f"创建会话状态 {datetime.now(beijing_tz).strftime('%Y-%m-%d %H:%M')}",
                         content
                     )
                 return True
@@ -376,7 +378,7 @@ class GitHubStateManager:
             st.session_state.time_inputs_cache = restored_time_cache
             
             # 恢复状态日期
-            st.session_state.state_date = data.get('state_date', datetime.now().date().isoformat())
+            st.session_state.state_date = data.get('state_date', datetime.now(beijing_tz).date().isoformat())
             
             if 'last_auto_save' in data:
                 st.session_state.last_auto_save = datetime.fromisoformat(data['last_auto_save'])
@@ -410,7 +412,7 @@ class GitHubStateManager:
     
     def clear_current_state(self):
         """清除当前状态（开始新的一天）"""
-        today = datetime.now().date().isoformat()
+        today = datetime.now(beijing_tz).date().isoformat()
         
         # 清除 session state
         self._clear_previous_day_state()
@@ -420,7 +422,7 @@ class GitHubStateManager:
         st.session_state.show_final_confirmation = False
         st.session_state.tasks_saved = False
         st.session_state.expander_expanded = True
-        st.session_state.current_date = datetime.now().date()
+        st.session_state.current_date = datetime.now(beijing_tz).date()
         st.session_state.current_weather = "晴"
         st.session_state.current_energy_level = 7
         st.session_state.current_reflection = ""
@@ -444,7 +446,7 @@ class GitHubStateManager:
     
     def get_state_info(self):
         """获取状态信息"""
-        today = datetime.now().date().isoformat()
+        today = datetime.now(beijing_tz).date().isoformat()
         is_today = st.session_state.get('state_date') == today
         
         return {
