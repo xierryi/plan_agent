@@ -40,16 +40,29 @@
         "planned_end_time": "13:35"
       }
     ],
-    "actual_execution": [],
+    "actual_execution": [
+      {
+        "task_id": 1,
+        "actual_start_time": "09:00",
+        "actual_end_time": "10:00",
+        "actual_duration": 60,
+        "actual_focus_duration": 48,
+        "post_energy": 7,
+        "completed": true
+      }
+    ],
     "time_inputs_cache": {
       "start_0": "09:00:00",
       "end_0": "10:00:00",
       "start_1": "10:05:00",
       "end_1": "11:10:00",
       "start_2": "11:30:00",
-      "end_2": "13:35:00"
+      "end_2": "13:35:00",
+      "actual_start_0": "09:00:00",
+      "actual_end_0": "10:00:00",
+      "energy_0": 7
     },
-    "last_auto_save": "2025-10-28T05:21:30.437892",
+    "last_auto_save": "2025-10-28T05:21:31.928413",
     "state_date": "2025-10-28"
   }
 }
