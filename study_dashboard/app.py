@@ -265,7 +265,7 @@ if page == "今日记录":
             # 日期变化时保存
             if current_date != st.session_state.get('current_date'):
                 st.session_state.current_date = current_date
-                github_state_manager.auto_save_state(force=True)
+                github_state_manager.auto_save_state(force=False)
                 
         with col2:
             current_weather_value = st.session_state.get('current_weather', "晴")
@@ -380,7 +380,7 @@ if page == "今日记录":
                     
                     if end_time <= start_time:
                         st.error("❌ 结束时间必须在开始时间之后")
-                        github_state_manager.auto_save_state(force=True)
+                        github_state_manager.auto_save_staFalse)
                         time.sleep(0.5)
                         st.rerun()
 
@@ -463,7 +463,7 @@ if page == "今日记录":
                         )
                         if cancel_confirm:
                             st.session_state.show_final_confirmation = False
-                            github_state_manager.auto_save_state(force=True)
+                            github_state_manager.auto_save_staFalse)
                             st.rerun()
                             
                     with confirm_col2:
@@ -476,7 +476,7 @@ if page == "今日记录":
                             st.session_state.tasks_confirmed = True
                             st.session_state.show_final_confirmation = False
                             st.session_state.expander_expanded = False
-                            # github_state_manager.auto_save_state(force=True)  # 关键操作，强制保存
+                            # github_state_manager.auto_save_staFalse)  # 关键操作，强制保存
                             st.success(f"✅ 已确认 {len(st.session_state.planned_tasks)} 个计划任务！")
                             st.rerun()
                 else:
@@ -496,7 +496,7 @@ if page == "今日记录":
                                     st.error(f"- {conflict}")
                             else:
                                 st.session_state.show_final_confirmation = True
-                                github_state_manager.auto_save_state(force=True)  # 关键操作，强制保存
+                                github_state_manager.auto_save_staFalse)  # 关键操作，强制保存
                                 st.rerun()
                         else:
                             st.warning("⚠️ 请至少填写一个任务名称")
@@ -611,7 +611,7 @@ if page == "今日记录":
                     
                     if actual_end_time <= actual_start_time:
                         st.error("❌ 实际结束时间必须在实际开始时间之后")
-                        github_state_manager.auto_save_state(force=True)
+                        github_state_manager.auto_save_staFalse)
                         time.sleep(0.5)
                         st.rerun()
 
@@ -706,7 +706,7 @@ if page == "今日记录":
                 submitted = st.form_submit_button("💾 保存今日记录")
                 if submitted:
                     st.session_state.tasks_saved = True
-                    github_state_manager.auto_save_state(force=True)  # 最终提交，强制保存
+                    github_state_manager.auto_save_staFalse)  # 最终提交，强制保存
                     
                     # 保存到数据管理器
                     try:
