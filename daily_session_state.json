@@ -1,9 +1,9 @@
 {
   "2025-10-28": {
-    "tasks_confirmed": false,
-    "show_final_confirmation": true,
+    "tasks_confirmed": true,
+    "show_final_confirmation": false,
     "tasks_saved": false,
-    "expander_expanded": true,
+    "expander_expanded": false,
     "current_date": "2025-10-28",
     "current_weather": "晴",
     "current_energy_level": 7,
@@ -30,16 +30,29 @@
         "planned_end_time": "12:25"
       }
     ],
-    "actual_execution": [],
+    "actual_execution": [
+      {
+        "task_id": 1,
+        "actual_start_time": "09:00",
+        "actual_end_time": "10:00",
+        "actual_duration": 60,
+        "actual_focus_duration": 48,
+        "post_energy": 7,
+        "completed": true
+      }
+    ],
     "time_inputs_cache": {
       "start_0": "09:00:00",
       "end_0": "10:00:00",
       "start_1": "10:20:00",
       "end_1": "12:25:00",
       "start_2": "09:00:00",
-      "end_2": "10:00:00"
+      "end_2": "10:00:00",
+      "actual_start_0": "09:00:00",
+      "actual_end_0": "10:00:00",
+      "energy_0": 7
     },
-    "last_auto_save": "2025-10-28T18:48:02.755451+08:00",
+    "last_auto_save": "2025-10-28T18:49:18.468966+08:00",
     "state_date": "2025-10-28"
   }
 }
