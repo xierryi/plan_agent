@@ -574,7 +574,14 @@ if page == "今日记录":
                     if actual_start_cache_key in time_inputs_cache:
                         default_actual_start = time_inputs_cache[actual_start_cache_key]
                     elif 'actual_start_time' in saved_actual:
-                        default_actual_start = datetime.strptime(saved_actual['actual_start_time'], '%H:%M').time()
+                        if isinstance(saved_actual['actual_start_time'], time):
+                            default_actual_start = saved_actual['actual_start_time']
+                        else:
+                            try:
+                                # 如果是字符串才解析
+                                default_actual_start = datetime.strptime(saved_actual['actual_start_time'], '%H:%M').time()
+                            except (ValueError, TypeError):
+                                default_actual_start = datetime.strptime(task['planned_start_time'], '%H:%M').time()
                     else:
                         default_actual_start = datetime.strptime(task['planned_start_time'], '%H:%M').time()
                     
@@ -595,7 +602,13 @@ if page == "今日记录":
                     if actual_end_cache_key in time_inputs_cache:
                         default_actual_end = time_inputs_cache[actual_end_cache_key]
                     elif 'actual_end_time' in saved_actual:
-                        default_actual_end = datetime.strptime(saved_actual['actual_end_time'], '%H:%M').time()
+                        if isinstance(saved_actual['actual_end_time'], time):
+                            default_actual_end = saved_actual['actual_end_time']
+                        else:
+                            try:
+                                default_actual_end = datetime.strptime(saved_actual['actual_end_time'], '%H:%M').time()
+                            except (ValueError, TypeError):
+                                default_actual_end = datetime.strptime(task['planned_end_time'], '%H:%M').time()
                     else:
                         default_actual_end = datetime.strptime(task['planned_end_time'], '%H:%M').time()
                     
@@ -943,7 +956,7 @@ GITHUB_REPO=仓库名""", language="ini")
                     st.rerun()
                 else:
                     st.error("❌ 同步失败")
-                    
+
     st.markdown("---")
     st.subheader("🗑️ 数据清理")
     
