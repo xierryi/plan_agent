@@ -1,7 +1,7 @@
 {
   "2025-10-28": {
     "tasks_confirmed": false,
-    "show_final_confirmation": false,
+    "show_final_confirmation": true,
     "tasks_saved": false,
     "expander_expanded": true,
     "current_date": "2025-10-28",
@@ -36,10 +36,10 @@
       "end_0": "10:00:00",
       "start_1": "10:10:00",
       "end_1": "11:20:00",
-      "start_2": "09:00:46",
-      "end_2": "10:00:46"
+      "start_2": "09:00:00",
+      "end_2": "10:00:00"
     },
-    "last_auto_save": "2025-10-28T05:44:07.747259",
+    "last_auto_save": "2025-10-28T05:48:46.803692",
     "state_date": "2025-10-28"
   }
 }
