@@ -226,29 +226,29 @@ def create_state_sidebar():
     
     # 在侧边栏底部添加调试信息
     with st.sidebar.expander("🔧 调试信息"):
-    state_info = github_state_manager.get_state_info()
-    st.write("GitHub 连接:", "✅ 已连接" if state_info['github_connected'] else "❌ 未连接")
-    st.write("状态日期:", state_info['state_date'])
-    st.write("计划任务数:", state_info['planned_task_count'])
-    st.write("任务确认:", state_info['tasks_confirmed'])
-    st.write("今日状态:", state_info['is_today'])
-    st.write("空状态检查:", "✅ 是" if github_state_manager._is_empty_state() else "❌ 否")
-    
-    # 显示保存的状态文件内容（调试用）
-    if st.button("查看GitHub保存的状态"):
-        today = datetime.now().date().isoformat()
-        all_states = github_state_manager._load_all_states_from_github()
-        if today in all_states:
-            st.json(all_states[today])
-            # 显示状态哈希对比
-            current_hash = github_state_manager._get_state_hash()
-            saved_data = all_states[today]
-            saved_hash = hashlib.md5(json.dumps(saved_data, sort_keys=True).encode()).hexdigest()
-            st.write("当前状态哈希:", current_hash[:8])
-            st.write("保存状态哈希:", saved_hash[:8])
-            st.write("状态一致:", current_hash == saved_hash)
-        else:
-            st.info("今天没有保存的状态")
+        state_info = github_state_manager.get_state_info()
+        st.write("GitHub 连接:", "✅ 已连接" if state_info['github_connected'] else "❌ 未连接")
+        st.write("状态日期:", state_info['state_date'])
+        st.write("计划任务数:", state_info['planned_task_count'])
+        st.write("任务确认:", state_info['tasks_confirmed'])
+        st.write("今日状态:", state_info['is_today'])
+        st.write("空状态检查:", "✅ 是" if github_state_manager._is_empty_state() else "❌ 否")
+        
+        # 显示保存的状态文件内容（调试用）
+        if st.button("查看GitHub保存的状态"):
+            today = datetime.now().date().isoformat()
+            all_states = github_state_manager._load_all_states_from_github()
+            if today in all_states:
+                st.json(all_states[today])
+                # 显示状态哈希对比
+                current_hash = github_state_manager._get_state_hash()
+                saved_data = all_states[today]
+                saved_hash = hashlib.md5(json.dumps(saved_data, sort_keys=True).encode()).hexdigest()
+                st.write("当前状态哈希:", current_hash[:8])
+                st.write("保存状态哈希:", saved_hash[:8])
+                st.write("状态一致:", current_hash == saved_hash)
+            else:
+                st.info("今天没有保存的状态")
 
 # 在页面中调用
 create_state_sidebar()
