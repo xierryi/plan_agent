@@ -1,9 +1,9 @@
 {
   "2025-10-28": {
-    "tasks_confirmed": false,
-    "show_final_confirmation": true,
+    "tasks_confirmed": true,
+    "show_final_confirmation": false,
     "tasks_saved": false,
-    "expander_expanded": true,
+    "expander_expanded": false,
     "current_date": "2025-10-29",
     "current_weather": "晴",
     "current_energy_level": 8,
@@ -48,9 +48,59 @@
         "difficulty": 2,
         "planned_start_time": "14:00",
         "planned_end_time": "15:00"
+      },
+      {
+        "task_id": 5,
+        "task_name": "群论",
+        "subject": "math",
+        "planned_duration": 60,
+        "planned_focus_duration": 48,
+        "difficulty": 3,
+        "planned_start_time": "15:00",
+        "planned_end_time": "16:00"
+      },
+      {
+        "task_id": 6,
+        "task_name": "微波电子学",
+        "subject": "econ",
+        "planned_duration": 60,
+        "planned_focus_duration": 48,
+        "difficulty": 3,
+        "planned_start_time": "16:00",
+        "planned_end_time": "17:00"
+      },
+      {
+        "task_id": 7,
+        "task_name": "微观经济学",
+        "subject": "math",
+        "planned_duration": 30,
+        "planned_focus_duration": 24,
+        "difficulty": 3,
+        "planned_start_time": "17:00",
+        "planned_end_time": "17:30"
+      },
+      {
+        "task_id": 8,
+        "task_name": "群论",
+        "subject": "math",
+        "planned_duration": 60,
+        "planned_focus_duration": 48,
+        "difficulty": 3,
+        "planned_start_time": "18:30",
+        "planned_end_time": "19:30"
       }
     ],
-    "actual_execution": [],
+    "actual_execution": [
+      {
+        "task_id": 1,
+        "actual_start_time": "08:20",
+        "actual_end_time": "10:20",
+        "actual_duration": 120,
+        "actual_focus_duration": 96,
+        "post_energy": 7,
+        "completed": true
+      }
+    ],
     "time_inputs_cache": {
       "start_0": "08:20:00",
       "end_0": "10:20:00",
@@ -62,14 +112,17 @@
       "end_3": "15:00:00",
       "start_4": "15:00:00",
       "end_4": "16:00:00",
-      "start_5": "09:00:08",
-      "end_5": "10:00:08",
-      "start_6": "09:00:08",
-      "end_6": "10:00:08",
-      "start_7": "09:00:08",
-      "end_7": "10:00:08"
+      "start_5": "16:00:00",
+      "end_5": "17:00:00",
+      "start_6": "17:00:00",
+      "end_6": "17:30:00",
+      "start_7": "18:30:00",
+      "end_7": "19:30:00",
+      "actual_start_0": "08:20:00",
+      "actual_end_0": "10:20:00",
+      "energy_0": 7
     },
-    "last_auto_save": "2025-10-28T20:36:08.223017+08:00",
+    "last_auto_save": "2025-10-28T20:39:11.670834+08:00",
     "state_date": "2025-10-28"
   }
 }
