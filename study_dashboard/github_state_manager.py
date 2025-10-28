@@ -1,7 +1,7 @@
 # github_state_manager.py
 import streamlit as st
 import json
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 from github_manager import GitHubDataManager
 
 class GitHubStateManager:
@@ -11,6 +11,9 @@ class GitHubStateManager:
         self.github_manager = GitHubDataManager()
         self.state_key = "daily_session_state"
         self.initialized = False
+        self.last_save_time = None
+        self.min_save_interval = timedelta(seconds=10)  # 最小保存间隔10秒
+        self.last_state_hash = None  # 用于检测状态变化
     
     def init_session_state(self):
         """初始化所有 session state 变量"""
@@ -48,9 +51,23 @@ class GitHubStateManager:
         
         self.initialized = True
     
-    def auto_save_state(self):
-        """自动保存当天状态到 GitHub"""
+    def auto_save_state(self, force=False):
+        """智能保存状态到 GitHub"""
         try:
+            # 频率控制：避免过于频繁的保存
+            current_time = datetime.now()
+            if (self.last_save_time and 
+                current_time - self.last_save_time < self.min_save_interval and 
+                not force):
+                return False  # 跳过保存
+            
+            # 检查是否有实际数据变化
+            current_state_hash = self._get_state_hash()
+            if (not force and 
+                self.last_state_hash and 
+                current_state_hash == self.last_state_hash):
+                return False  # 状态没有变化，跳过保存
+            
             # 确保所有必要的属性都存在
             self._ensure_session_state_initialized()
             
@@ -60,19 +77,73 @@ class GitHubStateManager:
             if st.session_state.get('state_date') != today:
                 self._clear_previous_day_state()
                 st.session_state.state_date = today
+                force = True
             
-            save_data = self._prepare_save_data()
-            success = self._save_to_github(today, save_data)
-            
-            if success:
-                st.session_state.last_auto_save = datetime.now()
-                return True
-            else:
-                return False
+            # 只有在有实际数据变化或强制保存时才保存
+            if force or self._has_meaningful_changes():
+                save_data = self._prepare_save_data()
+                success = self._save_to_github(today, save_data)
                 
-        except Exception as e:
-            st.sidebar.error(f"❌ 自动保存失败: {str(e)}")
+                if success:
+                    st.session_state.last_auto_save = current_time
+                    self.last_save_time = current_time
+                    self.last_state_hash = current_state_hash
+                    
+                    # 只在调试模式下显示成功信息
+                    if st.session_state.get('debug_mode', False):
+                        st.sidebar.success("💾 状态已智能保存")
+                    return True
+            
             return False
+                    
+        except Exception as e:
+            if st.session_state.get('debug_mode', False):
+                st.sidebar.error(f"❌ 自动保存失败: {str(e)}")
+            return False
+    
+    def _get_state_hash(self):
+        """生成状态哈希值，用于检测变化"""
+        import hashlib
+        state_data = {
+            'planned_tasks': st.session_state.get('planned_tasks', []),
+            'actual_execution': st.session_state.get('actual_execution', []),
+            'current_reflection': st.session_state.get('current_reflection', ''),
+            'tasks_confirmed': st.session_state.get('tasks_confirmed', False),
+            'tasks_saved': st.session_state.get('tasks_saved', False),
+        }
+        state_str = json.dumps(state_data, sort_keys=True, default=str)
+        return hashlib.md5(state_str.encode()).hexdigest()
+    
+    def _has_meaningful_changes(self):
+        """检查是否有有意义的数据变化"""
+        # 如果有计划任务且任务名称不为空
+        planned_tasks = st.session_state.get('planned_tasks', [])
+        if planned_tasks:
+            for task in planned_tasks:
+                if task.get('task_name', '').strip():  # 任务名称不为空
+                    return True
+        
+        # 如果有实际执行数据
+        actual_execution = st.session_state.get('actual_execution', [])
+        if actual_execution:
+            for execution in actual_execution:
+                if execution.get('actual_duration', 0) > 0:  # 有实际时长
+                    return True
+        
+        # 如果有反思内容
+        if st.session_state.get('current_reflection', '').strip():
+            return True
+        
+        # 如果任务已确认或已保存
+        if (st.session_state.get('tasks_confirmed', False) or 
+            st.session_state.get('tasks_saved', False)):
+            return True
+        
+        return False
+    
+    def manual_save_state(self):
+        """手动保存状态"""
+        return self.auto_save_state(force=True)
     
     def _ensure_session_state_initialized(self):
         """确保所有必要的 session state 属性都已初始化"""

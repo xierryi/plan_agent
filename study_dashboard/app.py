@@ -164,13 +164,13 @@ check_and_restore_state()
 # 在侧边栏添加状态管理面板
 def create_state_sidebar():
     st.sidebar.markdown("---")
-    st.sidebar.subheader("🔄 每日状态管理")
+    st.sidebar.subheader("🔄 智能状态管理")
     
     state_info = github_state_manager.get_state_info()
     
     # 显示状态信息
     if state_info['last_save']:
-        st.sidebar.info(f"🕒 最后保存: {state_info['last_save'].strftime('%H:%M:%S')}")
+        st.sidebar.info(f"💾 最后保存: {state_info['last_save'].strftime('%H:%M:%S')}")
     
     col1, col2 = st.sidebar.columns(2)
     with col1:
@@ -179,14 +179,24 @@ def create_state_sidebar():
     with col2:
         st.metric("任务", state_info['planned_task_count'])
     
+    # 智能保存模式说明
+    st.sidebar.caption("🔍 智能保存模式：只在数据变化时保存")
+    
     # 手动恢复按钮
-    if st.sidebar.button("🔄 手动恢复状态"):
+    if st.sidebar.button("🔄 恢复状态"):
         today = datetime.now().date().isoformat()
         if github_state_manager.load_from_github(today):
             st.sidebar.success("状态恢复成功!")
             st.rerun()
         else:
             st.sidebar.error("状态恢复失败!")
+    
+    # 手动保存按钮（用于特殊情况）
+    if st.sidebar.button("💾 手动保存"):
+        if github_state_manager.manual_save_state():
+            st.sidebar.success("手动保存成功!")
+        else:
+            st.sidebar.error("手动保存失败!")
     
     # 状态日期提醒
     if not state_info['is_today']:
@@ -195,26 +205,23 @@ def create_state_sidebar():
             github_state_manager.clear_current_state()
             st.rerun()
     
-    # 管理按钮
-    if st.sidebar.button("💾 保存状态"):
-        if github_state_manager.auto_save_state():
-            st.sidebar.success("状态已保存!")
-        else:
-            st.sidebar.error("保存失败!")
-    
-    if st.sidebar.button("🗑️ 清除今天状态"):
-        if github_state_manager.clear_current_state():
-            st.sidebar.success("状态已清除!")
-            st.rerun()
-
-        # 在侧边栏底部添加调试信息
+    # 在侧边栏底部添加调试信息
     with st.sidebar.expander("🔧 调试信息"):
+        # 保存模式信息
+        st.write("💡 保存模式: 智能保存")
+        st.write("📊 最小保存间隔: 10秒")
+        st.write("🔍 变化检测: 启用")
+        
         state_info = github_state_manager.get_state_info()
         st.write("GitHub 连接:", "✅ 已连接" if state_info['github_connected'] else "❌ 未连接")
         st.write("状态日期:", state_info['state_date'])
         st.write("计划任务数:", state_info['planned_task_count'])
         st.write("任务确认:", state_info['tasks_confirmed'])
         st.write("今日状态:", state_info['is_today'])
+        
+        # 调试模式开关
+        debug_mode = st.checkbox("调试模式", value=st.session_state.get('debug_mode', False))
+        st.session_state.debug_mode = debug_mode
         
         # 显示保存的状态文件内容（调试用）
         if st.button("查看保存的状态"):
@@ -229,52 +236,35 @@ def create_state_sidebar():
 create_state_sidebar()
 
 # 页面1: 今日记录
-# 页面1: 今日记录
 if page == "今日记录":
     st.title("📝 今日学习记录")
 
     with st.form("daily_record"):
         col1, col2, col3 = st.columns(3)
         with col1:
-            # 修复：在表单内部获取 session_state 值
             current_date_value = st.session_state.get('current_date', datetime.now().date())
-            current_date = st.date_input(
-                "日期", 
-                value=current_date_value,
-                key="date_input"
-            )
-            # 自动保存日期变化
+            current_date = st.date_input("日期", value=current_date_value, key="date_input")
+            # 日期变化时保存
             if current_date != st.session_state.get('current_date'):
                 st.session_state.current_date = current_date
-                github_state_manager.auto_save_state()
+                github_state_manager.auto_save_state(force=True)
                 
         with col2:
-            # 修复：在表单内部获取 session_state 值
             current_weather_value = st.session_state.get('current_weather', "晴")
             weather_options = ["晴", "多云", "雨", "阴", "雪"]
             current_weather_index = weather_options.index(current_weather_value) if current_weather_value in weather_options else 0
             
-            current_weather = st.selectbox(
-                "天气", 
-                weather_options,
-                index=current_weather_index,
-                key="weather_input"
-            )
+            current_weather = st.selectbox("天气", weather_options, index=current_weather_index, key="weather_input")
             if current_weather != st.session_state.get('current_weather'):
                 st.session_state.current_weather = current_weather
-                github_state_manager.auto_save_state()
-                
+                # 天气变化时不立即保存，等待其他操作
+            
         with col3:
-            # 修复：在表单内部获取 session_state 值
             current_energy_level_value = st.session_state.get('current_energy_level', 7)
-            current_energy_level = st.slider(
-                "精力水平", 1, 10, 
-                value=current_energy_level_value,
-                key="energy_input"
-            )
+            current_energy_level = st.slider("精力水平", 1, 10, value=current_energy_level_value, key="energy_input")
             if current_energy_level != st.session_state.get('current_energy_level'):
                 st.session_state.current_energy_level = current_energy_level
-                github_state_manager.auto_save_state()
+                # 精力水平变化时不立即保存，等待其他操作
         
         st.subheader("今日计划任务")
         planned_tasks = []
@@ -372,7 +362,7 @@ if page == "今日记录":
                     
                     if end_time <= start_time:
                         st.error("❌ 结束时间必须在开始时间之后")
-                        github_state_manager.auto_save_state()
+                        github_state_manager.auto_save_state(force=True)
                         time.sleep(0.5)
                         st.rerun()
 
@@ -403,8 +393,8 @@ if page == "今日记录":
                 with col_labels[6]:
                     st.caption("")
 
-                # 实时保存任务数据
-                if task_name:
+                # 实时保存任务数据（只在有任务名称时保存）
+                if task_name.strip():
                     start_dt = datetime.combine(current_date, start_time)
                     end_dt = datetime.combine(current_date, end_time)
                     calculated_duration = calculate_duration(start_dt, end_dt)
@@ -428,6 +418,7 @@ if page == "今日记录":
                         planned_tasks.append(task_data)
                     st.session_state.planned_tasks = planned_tasks
                     
+                    # 智能保存：只在有实际任务内容时保存
                     github_state_manager.auto_save_state()
                 
                 st.markdown("---")
@@ -454,7 +445,7 @@ if page == "今日记录":
                         )
                         if cancel_confirm:
                             st.session_state.show_final_confirmation = False
-                            github_state_manager.auto_save_state()
+                            github_state_manager.auto_save_state(force=True)
                             st.rerun()
                             
                     with confirm_col2:
@@ -467,7 +458,7 @@ if page == "今日记录":
                             st.session_state.tasks_confirmed = True
                             st.session_state.show_final_confirmation = False
                             st.session_state.expander_expanded = False
-                            github_state_manager.auto_save_state()
+                            github_state_manager.auto_save_state(force=True)  # 关键操作，强制保存
                             st.success(f"✅ 已确认 {len(st.session_state.planned_tasks)} 个计划任务！")
                             st.rerun()
                 else:
@@ -487,7 +478,7 @@ if page == "今日记录":
                                     st.error(f"- {conflict}")
                             else:
                                 st.session_state.show_final_confirmation = True
-                                github_state_manager.auto_save_state()
+                                github_state_manager.auto_save_state(force=True)  # 关键操作，强制保存
                                 st.rerun()
                         else:
                             st.warning("⚠️ 请至少填写一个任务名称")
@@ -602,7 +593,7 @@ if page == "今日记录":
                     
                     if actual_end_time <= actual_start_time:
                         st.error("❌ 实际结束时间必须在实际开始时间之后")
-                        github_state_manager.auto_save_state()
+                        github_state_manager.auto_save_state(force=True)
                         time.sleep(0.5)
                         st.rerun()
 
@@ -668,6 +659,7 @@ if page == "今日记录":
                         actual_execution.append(actual_data)
                     st.session_state.actual_execution = actual_execution
                     
+                    # 智能保存：有实际执行数据时保存
                     github_state_manager.auto_save_state()
                 else:
                     st.warning("⚠️ 请调整时间以确保结束时间在开始时间之后")
@@ -682,7 +674,9 @@ if page == "今日记录":
                 placeholder="今天的收获和改进点...", 
                 key="reflection_input"
             )
-            if current_reflection != st.session_state.get('current_reflection'):
+            # 反思内容变化时智能保存（有内容才保存）
+            if (current_reflection != st.session_state.get('current_reflection') and 
+                current_reflection.strip()):
                 st.session_state.current_reflection = current_reflection
                 github_state_manager.auto_save_state()
             
@@ -694,7 +688,7 @@ if page == "今日记录":
                 submitted = st.form_submit_button("💾 保存今日记录")
                 if submitted:
                     st.session_state.tasks_saved = True
-                    github_state_manager.auto_save_state()
+                    github_state_manager.auto_save_state(force=True)  # 最终提交，强制保存
                     
                     # 保存到数据管理器
                     try:
