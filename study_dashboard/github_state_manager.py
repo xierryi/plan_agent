@@ -112,20 +112,20 @@ class GitHubStateManager:
                     return False  # 有任务内容，不是空状态
         
         # 检查是否有实际执行数据
-        actual_execution = st.session_state.get('actual_execution', [])
-        if actual_execution:
-            return False  # 有执行数据，不是空状态
+        # actual_execution = st.session_state.get('actual_execution', [])
+        # if actual_execution:
+        #     return False  # 有执行数据，不是空状态
         
-        # 检查是否有反思内容
-        if st.session_state.get('current_reflection', '').strip():
-            return False  # 有反思内容，不是空状态
+        # # 检查是否有反思内容
+        # if st.session_state.get('current_reflection', '').strip():
+        #     return False  # 有反思内容，不是空状态
         
-        # 检查任务状态
-        if (st.session_state.get('tasks_confirmed', False) or 
-            st.session_state.get('tasks_saved', False)):
-            return False  # 有任务状态，不是空状态
+        # # 检查任务状态
+        # if (st.session_state.get('tasks_confirmed', False) or 
+        #     st.session_state.get('tasks_saved', False)):
+        #     return False  # 有任务状态，不是空状态
         
-        # 如果所有检查都通过，说明是空状态
+        # # 如果所有检查都通过，说明是空状态
         return True
     
     def _get_state_hash(self):
