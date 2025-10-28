@@ -1,9 +1,9 @@
 {
   "2025-10-28": {
-    "tasks_confirmed": false,
-    "show_final_confirmation": true,
+    "tasks_confirmed": true,
+    "show_final_confirmation": false,
     "tasks_saved": false,
-    "expander_expanded": true,
+    "expander_expanded": false,
     "current_date": "2025-10-28",
     "current_weather": "晴",
     "current_energy_level": 7,
@@ -49,7 +49,7 @@
       "start_2": "11:30:00",
       "end_2": "13:35:00"
     },
-    "last_auto_save": "2025-10-28T05:21:23.860933",
+    "last_auto_save": "2025-10-28T05:21:25.331573",
     "state_date": "2025-10-28"
   }
 }
