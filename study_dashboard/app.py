@@ -255,11 +255,6 @@ create_state_sidebar()
 
 # 页面1: 今日记录
 if page == "今日记录":
-    # 强制状态恢复检查
-    today = datetime.now().date().isoformat()
-    if not st.session_state.get('state_restored', False):
-        github_state_manager.load_from_github(today)
-        st.session_state.state_restored = True
     st.title("📝 今日学习记录")
 
     with st.form("daily_record"):
