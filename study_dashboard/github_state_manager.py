@@ -576,7 +576,20 @@ class GitHubStateManager:
             
             # st.success("✅ 缓存数据已清除")
             # 清除 session state 中的所有数据
+            try:
+                contents = self.github_manager.repo.get_contents(self.state_key)
+                self.github_manager.repo.delete_file(
+                    self.state_key,
+                    "清除所有状态数据",
+                    contents.sha
+                )
+            except Exception:
+                pass  # 文件不存在
+
+            st.success("✅ 缓存数据已清除")
+            # 清除 session state 中的所有数据       
             self._clear_all_session_state()
+            
             return True
             
         except Exception as e:
