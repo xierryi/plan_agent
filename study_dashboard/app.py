@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 try:
     import pandas as pd
     import plotly.express as px
