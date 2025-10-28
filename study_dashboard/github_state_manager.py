@@ -555,32 +555,87 @@ class GitHubStateManager:
     def _clear_cache_only(self):
         """只清除缓存数据"""
         try:
-            # 清除 session state 中的缓存
-            cache_keys = ['time_inputs_cache', 'auto_saved_data']
-            for key in cache_keys:
-                if key in st.session_state:
-                    del st.session_state[key]
+            # # 清除 session state 中的缓存
+            # cache_keys = ['time_inputs_cache', 'auto_saved_data']
+            # for key in cache_keys:
+            #     if key in st.session_state:
+            #         del st.session_state[key]
             
-            # 清除 GitHub 上的状态缓存（保留当天状态）
-            today = datetime.now(beijing_tz).date().isoformat()
-            all_states = self._load_all_states_from_github()
+            # # 清除 GitHub 上的状态缓存（保留当天状态）
+            # today = datetime.now(beijing_tz).date().isoformat()
+            # all_states = self._load_all_states_from_github()
             
-            # 只保留今天的状态
-            cleaned_states = {}
-            if today in all_states:
-                cleaned_states[today] = all_states[today]
+            # # 只保留今天的状态
+            # cleaned_states = {}
+            # if today in all_states:
+            #     cleaned_states[today] = all_states[today]
             
-            if len(cleaned_states) < len(all_states):
-                content = json.dumps(cleaned_states, ensure_ascii=False, indent=2)
-                self._save_raw_to_github(content)
+            # if len(cleaned_states) < len(all_states):
+            #     content = json.dumps(cleaned_states, ensure_ascii=False, indent=2)
+            #     self._save_raw_to_github(content)
             
-            st.success("✅ 缓存数据已清除")
+            # st.success("✅ 缓存数据已清除")
+            # 清除 session state 中的所有数据
+            self._clear_all_session_state()
             return True
             
         except Exception as e:
             st.error(f"❌ 清除缓存失败: {str(e)}")
             return False
-    
+        
+    def _cleanup_old_data(self, days_to_keep):
+        """清理指定天数前的数据"""
+        try:
+            cutoff_date = datetime.now(beijing_tz) - timedelta(days=days_to_keep)
+            deleted_count = 0
+            
+            # 清理状态数据
+            try:
+                all_states = self._load_all_states_from_github()
+                original_count = len(all_states)
+                
+                # 删除旧的状态数据
+                all_states = {
+                    date: data for date, data in all_states.items() 
+                    if datetime.fromisoformat(date).date() >= cutoff_date.date()
+                }
+                
+                if len(all_states) < original_count:
+                    content = json.dumps(all_states, ensure_ascii=False, indent=2)
+                    self._save_raw_to_github(content)
+                    deleted_count += (original_count - len(all_states))
+            except Exception:
+                pass
+            
+            # 清理学习数据
+            try:
+                all_study_data = self.github_manager.load_all_data()
+                original_study_count = len(all_study_data)
+                
+                # 删除旧的学习数据
+                all_study_data = [
+                    data for data in all_study_data 
+                    if datetime.fromisoformat(data['date']).date() >= cutoff_date.date()
+                ]
+                
+                if len(all_study_data) < original_study_count:
+                    content = json.dumps(all_study_data, ensure_ascii=False, indent=2)
+                    self.github_manager._save_raw_to_github("study_data.json", content)
+                    deleted_count += (original_study_count - len(all_study_data))
+            except Exception:
+                pass
+            
+            if deleted_count > 0:
+                st.success(f"✅ 已清理 {deleted_count} 条旧数据（保留最近 {days_to_keep} 天）")
+            else:
+                st.info("📝 没有需要清理的旧数据")
+                
+            return True
+            
+        except Exception as e:
+            st.error(f"❌ 清理旧数据失败: {str(e)}")
+            return False
+        
     def _clear_all_data(self):
         """清除所有数据"""
         try:
