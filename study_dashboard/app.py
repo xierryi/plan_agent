@@ -94,7 +94,7 @@ def init_mobile_detection():
         js_code = """
         <script>
         function checkMobile() {
-            const isMobile = window.innerWidth < 768;
+            const isMobile = window.innerWidth < 1000;
             // 通过URL参数传递结果（这是最可靠的方法）
             if (isMobile && !window.location.href.includes('is_mobile=true')) {
                 window.location.href = window.location.href + (window.location.href.includes('?') ? '&' : '?') + 'is_mobile=true';
