@@ -342,7 +342,12 @@ if page == "今日记录":
                     if start_cache_key in time_inputs_cache:
                         default_start = time_inputs_cache[start_cache_key]
                     elif 'planned_start_time' in saved_task:
-                        default_start = datetime.strptime(saved_task['planned_start_time'], '%H:%M').time()
+                        # 修复：正确处理时间对象和字符串
+                        start_time_value = saved_task['planned_start_time']
+                        if isinstance(start_time_value, str):
+                            default_start = datetime.strptime(start_time_value, '%H:%M').time()
+                        else:
+                            default_start = start_time_value
                     else:
                         default_start = datetime.now().time().replace(hour=9, minute=0)
                     
@@ -364,7 +369,11 @@ if page == "今日记录":
                     if end_cache_key in time_inputs_cache:
                         default_end = time_inputs_cache[end_cache_key]
                     elif 'planned_end_time' in saved_task:
-                        default_end = datetime.strptime(saved_task['planned_end_time'], '%H:%M').time()
+                        end_time_value = saved_task['planned_end_time']
+                        if isinstance(end_time_value, str):
+                            default_end = datetime.strptime(end_time_value, '%H:%M').time()
+                        else:
+                            default_end = end_time_value
                     else:
                         default_end = datetime.now().time().replace(hour=10, minute=0)
                     
@@ -412,32 +421,33 @@ if page == "今日记录":
                     st.caption("")
 
                 # 实时保存任务数据（只在有任务名称时保存）
-                if task_name.strip():
-                    start_dt = datetime.combine(current_date, start_time)
-                    end_dt = datetime.combine(current_date, end_time)
-                    calculated_duration = calculate_duration(start_dt, end_dt)
+                start_dt = datetime.combine(current_date, start_time)
+                end_dt = datetime.combine(current_date, end_time)
+                calculated_duration = calculate_duration(start_dt, end_dt)
 
-                    task_data = {
-                        "task_id": i+1,
-                        "task_name": task_name,
-                        "subject": subject,
-                        "planned_duration": calculated_duration,
-                        "planned_focus_duration": int(calculated_duration * 0.8),
-                        "difficulty": difficulty,
-                        "planned_start_time": start_time.strftime('%H:%M'),
-                        "planned_end_time": end_time.strftime('%H:%M')
-                    }
-                    
-                    # 更新或添加任务数据
-                    planned_tasks = st.session_state.get('planned_tasks', [])
-                    if i < len(planned_tasks):
-                        planned_tasks[i] = task_data
-                    else:
-                        planned_tasks.append(task_data)
-                    st.session_state.planned_tasks = planned_tasks
-                    
-                    # 智能保存：只在有实际任务内容时保存
-                    github_state_manager.auto_save_state()
+                task_data = {
+                    "task_id": i+1,
+                    "task_name": task_name.strip() or f"任务{i+1}",  # 确保任务名称不为空
+                    "subject": subject,
+                    "planned_duration": calculated_duration,
+                    "planned_focus_duration": int(calculated_duration * 0.8),
+                    "difficulty": difficulty,
+                    "planned_start_time": start_time.strftime('%H:%M'),
+                    "planned_end_time": end_time.strftime('%H:%M')
+                }
+
+                # 更新或添加任务数据
+                planned_tasks = st.session_state.get('planned_tasks', [])
+
+                # 确保 planned_tasks 列表足够长
+                while len(planned_tasks) <= i:
+                    planned_tasks.append({})
+
+                planned_tasks[i] = task_data
+                st.session_state.planned_tasks = planned_tasks
+
+                # 智能保存：只要有任务数据就保存（不检查任务名称）
+                github_state_manager.auto_save_state()
                 
                 st.markdown("---")
 
@@ -703,7 +713,7 @@ if page == "今日记录":
             if temporary_storage:
                 github_state_manager.auto_save_state(force=True)
                 st.success("💾 当前进度已暂存")
-                
+
             # 反思框
             current_reflection_value = st.session_state.get('current_reflection', "")
             current_reflection = st.text_area(
