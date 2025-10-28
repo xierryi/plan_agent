@@ -44,13 +44,33 @@
     "planned_tasks": [
       {
         "task_id": 1,
-        "task_name": "i",
+        "task_name": "大作业",
         "subject": "math",
         "planned_duration": 60,
         "planned_focus_duration": 48,
         "difficulty": 3,
         "planned_start_time": "09:00",
         "planned_end_time": "10:00"
+      },
+      {
+        "task_id": 2,
+        "task_name": "123",
+        "subject": "math",
+        "planned_duration": 65,
+        "planned_focus_duration": 52,
+        "difficulty": 3,
+        "planned_start_time": "10:05",
+        "planned_end_time": "11:10"
+      },
+      {
+        "task_id": 3,
+        "task_name": "在干嘛",
+        "subject": "math",
+        "planned_duration": 125,
+        "planned_focus_duration": 100,
+        "difficulty": 3,
+        "planned_start_time": "11:30",
+        "planned_end_time": "13:35"
       }
     ],
     "actual_execution": [
@@ -62,18 +82,36 @@
         "actual_focus_duration": 48,
         "post_energy": 7,
         "completed": true
+      },
+      {
+        "task_id": 2,
+        "actual_start_time": "10:05",
+        "actual_end_time": "11:10",
+        "actual_duration": 65,
+        "actual_focus_duration": 52,
+        "post_energy": 7,
+        "completed": true
+      },
+      {
+        "task_id": 3,
+        "actual_start_time": "11:30",
+        "actual_end_time": "13:35",
+        "actual_duration": 125,
+        "actual_focus_duration": 100,
+        "post_energy": 7,
+        "completed": true
       }
     ],
     "daily_summary": {
-      "planned_total_time": 60,
-      "actual_total_time": 60,
-      "planned_focus_time": 48,
-      "actual_focus_time": 48,
+      "planned_total_time": 250,
+      "actual_total_time": 250,
+      "planned_focus_time": 200,
+      "actual_focus_time": 200,
       "completion_rate": 1.0,
       "reflection": ""
     },
-    "created_at": "2025-10-27T11:57:35.513287",
-    "updated_at": "2025-10-27T11:57:35.513298"
+    "created_at": "2025-10-28T05:22:06.534571",
+    "updated_at": "2025-10-28T05:22:06.534585"
   },
   {
     "date": "2025-10-27",
