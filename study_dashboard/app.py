@@ -23,6 +23,8 @@ except ImportError:
     from data_manager import StudyDataManager
     data_manager = StudyDataManager()
 
+datetime.now = lambda: __import__('datetime').datetime.now(__import__('pytz').timezone('Asia/Shanghai'))
+
 # 移除原有的 @st.cache_resource 装饰器
 
 def check_time_conflicts(planned_tasks, date):

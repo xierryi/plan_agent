@@ -3,6 +3,8 @@ import pandas as pd
 from datetime import datetime, timedelta
 import os
 
+datetime.now = lambda: __import__('datetime').datetime.now(__import__('pytz').timezone('Asia/Shanghai'))
+
 class StudyDataManager:
     def __init__(self, data_file="study_data.jsonl"):
         self.data_file = data_file

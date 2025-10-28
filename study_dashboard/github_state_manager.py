@@ -4,6 +4,8 @@ import json
 from datetime import datetime, time, timedelta
 from github_manager import GitHubDataManager
 
+datetime.now = lambda: __import__('datetime').datetime.now(__import__('pytz').timezone('Asia/Shanghai'))
+
 class GitHubStateManager:
     """使用 GitHub 作为持久化存储的状态管理器 - 仅保留当天状态"""
     
