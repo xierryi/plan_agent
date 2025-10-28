@@ -1,7 +1,7 @@
 # github_state_manager.py
 import streamlit as st
 import json
-from datetime import datetime
+from datetime import datetime, time
 from github_manager import GitHubDataManager
 
 class GitHubStateManager:
