@@ -699,8 +699,11 @@ if page == "今日记录":
                 st.markdown("---")
             
             # 暂存按钮
-            st.form_submit_button("💾 暂存当前进度", use_container_width=True)
-
+            temporary_storage = st.form_submit_button("💾 暂存当前进度")
+            if temporary_storage:
+                github_state_manager.auto_save_state(force=True)
+                st.success("💾 当前进度已暂存")
+                
             # 反思框
             current_reflection_value = st.session_state.get('current_reflection', "")
             current_reflection = st.text_area(

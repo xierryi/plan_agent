@@ -71,12 +71,23 @@ class GitHubStateManager:
                 not force):
                 return False
             
-            # 检查是否有实际数据变化
+            # 智能变化检测：区分计划阶段和执行阶段
             current_state_hash = self._get_state_hash()
-            if (not force and 
-                self.last_state_hash and 
-                current_state_hash == self.last_state_hash):
-                return False
+            
+            # 如果有实际执行数据，降低保存门槛（执行阶段更频繁保存）
+            actual_execution = st.session_state.get('actual_execution', [])
+            has_actual_data = actual_execution and len(actual_execution) > 0
+            
+            if has_actual_data:
+                # 执行阶段：只要有实际数据就保存，不检查哈希变化
+                # 因为时间输入等微小变化也需要保存
+                pass
+            else:
+                # 计划阶段：严格检查哈希变化，避免不必要的保存
+                if (not force and 
+                    self.last_state_hash and 
+                    current_state_hash == self.last_state_hash):
+                    return False
 
             # 确保所有必要的属性都存在
             self._ensure_session_state_initialized()
@@ -96,11 +107,19 @@ class GitHubStateManager:
                 st.session_state.last_auto_save = current_time
                 self.last_save_time = current_time
                 self.last_state_hash = current_state_hash
+                
+                # 在侧边栏显示保存状态（可选）
+                if has_actual_data:
+                    st.sidebar.success("💾 执行数据已保存")
+                else:
+                    st.sidebar.info("💾 计划数据已保存")
+                    
                 return True
             
             return False
                     
         except Exception as e:
+            st.sidebar.error(f"❌ 保存失败: {str(e)}")
             return False
 
     def _is_empty_state(self):
@@ -129,15 +148,57 @@ class GitHubStateManager:
         return True
     
     def _get_state_hash(self):
-        """生成状态哈希值，用于检测变化"""
+        """生成完整的状态哈希值，用于检测变化"""
         import hashlib
+        
+        # 构建完整的状态数据，包含所有可能变化的字段
         state_data = {
+            # 任务数据
             'planned_tasks': st.session_state.get('planned_tasks', []),
             'actual_execution': st.session_state.get('actual_execution', []),
-            'current_reflection': st.session_state.get('current_reflection', ''),
+            
+            # 表单状态
             'tasks_confirmed': st.session_state.get('tasks_confirmed', False),
             'tasks_saved': st.session_state.get('tasks_saved', False),
+            'show_final_confirmation': st.session_state.get('show_final_confirmation', False),
+            
+            # 用户输入
+            'current_reflection': st.session_state.get('current_reflection', ''),
+            'current_weather': st.session_state.get('current_weather', ''),
+            'current_energy_level': st.session_state.get('current_energy_level', 0),
+            'current_date': str(st.session_state.get('current_date', '')),
+            
+            # 时间缓存（关键变化检测）
+            'time_inputs_cache': st.session_state.get('time_inputs_cache', {})
         }
+        
+        # 深度处理任务数据，确保所有字段都被包含
+        processed_planned_tasks = []
+        for task in state_data['planned_tasks']:
+            processed_task = {
+                'task_name': task.get('task_name', ''),
+                'subject': task.get('subject', ''),
+                'difficulty': task.get('difficulty', 0),
+                'planned_start_time': task.get('planned_start_time', ''),
+                'planned_end_time': task.get('planned_end_time', ''),
+                'planned_duration': task.get('planned_duration', 0)
+            }
+            processed_planned_tasks.append(processed_task)
+        state_data['planned_tasks'] = processed_planned_tasks
+        
+        # 深度处理执行数据
+        processed_actual_execution = []
+        for execution in state_data['actual_execution']:
+            processed_execution = {
+                'task_id': execution.get('task_id', 0),
+                'actual_start_time': execution.get('actual_start_time', ''),
+                'actual_end_time': execution.get('actual_end_time', ''),
+                'actual_duration': execution.get('actual_duration', 0),
+                'post_energy': execution.get('post_energy', 0)
+            }
+            processed_actual_execution.append(processed_execution)
+        state_data['actual_execution'] = processed_actual_execution
+        
         state_str = json.dumps(state_data, sort_keys=True, default=str)
         return hashlib.md5(state_str.encode()).hexdigest()
     
