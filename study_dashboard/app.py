@@ -602,13 +602,14 @@ if page == "今日记录":
                     if actual_end_cache_key in time_inputs_cache:
                         default_actual_end = time_inputs_cache[actual_end_cache_key]
                     elif 'actual_end_time' in saved_actual:
-                        if isinstance(saved_actual['actual_end_time'], time):
-                            default_actual_end = saved_actual['actual_end_time']
-                        else:
-                            try:
+                        try:
+                            # 如果是字符串就解析，如果是time对象就直接使用
+                            if isinstance(saved_actual['actual_end_time'], str):
                                 default_actual_end = datetime.strptime(saved_actual['actual_end_time'], '%H:%M').time()
-                            except (ValueError, TypeError):
-                                default_actual_end = datetime.strptime(task['planned_end_time'], '%H:%M').time()
+                            else:
+                                default_actual_end = saved_actual['actual_end_time']
+                        except:
+                            default_actual_end = datetime.strptime(task['planned_end_time'], '%H:%M').time()
                     else:
                         default_actual_end = datetime.strptime(task['planned_end_time'], '%H:%M').time()
                     
