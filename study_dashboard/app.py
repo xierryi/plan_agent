@@ -145,6 +145,22 @@ primary_color = "#1f77b4"
 # 在页面开始处初始化状态管理器
 github_state_manager.init_session_state()
 
+def check_and_restore_state():
+    """检查并恢复状态"""
+    today = datetime.now().date().isoformat()
+    
+    # 如果 session_state 中没有数据，尝试从 GitHub 恢复
+    if not st.session_state.get('planned_tasks') and not st.session_state.get('tasks_confirmed'):
+        st.sidebar.info("🔄 正在尝试恢复状态...")
+        if github_state_manager.load_from_github(today):
+            st.sidebar.success("✅ 状态恢复成功！")
+            st.rerun()  # 重新渲染页面以显示恢复的数据
+        else:
+            st.sidebar.info("🆕 开始新的一天")
+
+# 调用状态恢复检查
+check_and_restore_state()
+
 # 在侧边栏添加状态管理面板
 def create_state_sidebar():
     st.sidebar.markdown("---")
@@ -163,6 +179,15 @@ def create_state_sidebar():
     with col2:
         st.metric("任务", state_info['planned_task_count'])
     
+    # 手动恢复按钮
+    if st.sidebar.button("🔄 手动恢复状态"):
+        today = datetime.now().date().isoformat()
+        if github_state_manager.load_from_github(today):
+            st.sidebar.success("状态恢复成功!")
+            st.rerun()
+        else:
+            st.sidebar.error("状态恢复失败!")
+    
     # 状态日期提醒
     if not state_info['is_today']:
         st.sidebar.warning(f"⚠️ 显示 {state_info['state_date']} 的状态")
@@ -177,10 +202,28 @@ def create_state_sidebar():
         else:
             st.sidebar.error("保存失败!")
     
-    if st.sidebar.button("🔄 清除今天状态"):
+    if st.sidebar.button("🗑️ 清除今天状态"):
         if github_state_manager.clear_current_state():
             st.sidebar.success("状态已清除!")
             st.rerun()
+
+        # 在侧边栏底部添加调试信息
+    with st.sidebar.expander("🔧 调试信息"):
+        state_info = github_state_manager.get_state_info()
+        st.write("GitHub 连接:", "✅ 已连接" if state_info['github_connected'] else "❌ 未连接")
+        st.write("状态日期:", state_info['state_date'])
+        st.write("计划任务数:", state_info['planned_task_count'])
+        st.write("任务确认:", state_info['tasks_confirmed'])
+        st.write("今日状态:", state_info['is_today'])
+        
+        # 显示保存的状态文件内容（调试用）
+        if st.button("查看保存的状态"):
+            today = datetime.now().date().isoformat()
+            all_states = github_state_manager._load_all_states_from_github()
+            if today in all_states:
+                st.json(all_states[today])
+            else:
+                st.info("今天没有保存的状态")
 
 # 在页面中调用
 create_state_sidebar()

@@ -19,46 +19,34 @@ class GitHubStateManager:
             
         # 先尝试从 GitHub 加载当天状态
         today = datetime.now().date().isoformat()
+        
+        # 强制从 GitHub 加载状态
         if self.load_from_github(today):
-            st.sidebar.success("✅ 当天状态已恢复")
             self.initialized = True
             return
             
-        # 否则使用默认值 - 确保包含所有必要的属性
+        # 如果加载失败，使用默认值
         default_states = {
-            # 任务状态
             'tasks_confirmed': False,
             'show_final_confirmation': False,
             'tasks_saved': False,
             'expander_expanded': True,
-            
-            # 表单数据
             'current_date': datetime.now().date(),
             'current_weather': "晴",
             'current_energy_level': 7,
             'current_reflection': "",
-            
-            # 任务数据
             'planned_tasks': [],
             'actual_execution': [],
-            
-            # 时间数据缓存
             'time_inputs_cache': {},
-            
-            # 最后保存时间戳
             'last_auto_save': None,
-            
-            # 状态日期标识
             'state_date': today
         }
         
-        # 确保所有默认状态都被设置
         for key, value in default_states.items():
             if key not in st.session_state:
                 st.session_state[key] = value
         
         self.initialized = True
-        st.sidebar.info("🆕 新的一天开始")
     
     def auto_save_state(self):
         """自动保存当天状态到 GitHub"""
