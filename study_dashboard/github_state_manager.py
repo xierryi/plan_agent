@@ -461,6 +461,52 @@ class GitHubStateManager:
             'actual_execution_count': len(st.session_state.get('actual_execution', []))
         }
     
+    def get_data_stats(self):
+        """获取数据统计信息"""
+        stats = {
+            'state_count': 0,
+            'study_data_count': 0,
+            'old_states': 0,
+            'old_study_data': 0,
+            'cache_size': 0
+        }
+        
+        # 统计缓存大小
+        cache_keys = ['time_inputs_cache', 'auto_saved_data']
+        for key in cache_keys:
+            if key in st.session_state:
+                stats['cache_size'] += len(str(st.session_state[key]))
+        
+        if not self.github_manager.is_connected():
+            return stats
+            
+        try:
+            # 统计状态数据
+            all_states = self._load_all_states_from_github()
+            stats['state_count'] = len(all_states)
+            
+            # 统计30天前的旧状态数据
+            cutoff_date = datetime.now(beijing_tz) - timedelta(days=30)
+            stats['old_states'] = sum(
+                1 for date in all_states.keys() 
+                if datetime.fromisoformat(date).date() < cutoff_date.date()
+            )
+            
+            # 统计学习数据
+            all_study_data = self.github_manager.load_all_data()
+            stats['study_data_count'] = len(all_study_data)
+            
+            # 统计30天前的旧学习数据
+            stats['old_study_data'] = sum(
+                1 for data in all_study_data 
+                if datetime.fromisoformat(data['date']).date() < cutoff_date.date()
+            )
+            
+        except Exception:
+            pass
+            
+        return stats
+    
     def cleanup_data(self, days_to_keep=30, clear_all=False, clear_cache=False):
         """清理数据
         
@@ -570,51 +616,6 @@ class GitHubStateManager:
         self.initialized = False
         self.init_session_state()
     
-    def get_data_stats(self):
-        """获取数据统计信息"""
-        stats = {
-            'state_count': 0,
-            'study_data_count': 0,
-            'old_states': 0,
-            'old_study_data': 0,
-            'cache_size': 0
-        }
-        
-        # 统计缓存大小
-        cache_keys = ['time_inputs_cache', 'auto_saved_data']
-        for key in cache_keys:
-            if key in st.session_state:
-                stats['cache_size'] += len(str(st.session_state[key]))
-        
-        if not self.github_manager.is_connected():
-            return stats
-            
-        try:
-            # 统计状态数据
-            all_states = self._load_all_states_from_github()
-            stats['state_count'] = len(all_states)
-            
-            # 统计30天前的旧状态数据
-            cutoff_date = datetime.now(beijing_tz) - timedelta(days=30)
-            stats['old_states'] = sum(
-                1 for date in all_states.keys() 
-                if datetime.fromisoformat(date).date() < cutoff_date.date()
-            )
-            
-            # 统计学习数据
-            all_study_data = self.github_manager.load_all_data()
-            stats['study_data_count'] = len(all_study_data)
-            
-            # 统计30天前的旧学习数据
-            stats['old_study_data'] = sum(
-                1 for data in all_study_data 
-                if datetime.fromisoformat(data['date']).date() < cutoff_date.date()
-            )
-            
-        except Exception:
-            pass
-            
-        return stats
     
 # 创建全局状态管理器实例
 github_state_manager = GitHubStateManager()
