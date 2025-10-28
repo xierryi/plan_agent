@@ -1,9 +1,9 @@
 {
   "2025-10-28": {
-    "tasks_confirmed": false,
+    "tasks_confirmed": true,
     "show_final_confirmation": false,
     "tasks_saved": false,
-    "expander_expanded": true,
+    "expander_expanded": false,
     "current_date": "2025-10-28",
     "current_weather": "晴",
     "current_energy_level": 7,
@@ -11,7 +11,7 @@
     "planned_tasks": [
       {
         "task_id": 1,
-        "task_name": "765",
+        "task_name": "123",
         "subject": "math",
         "planned_duration": 60,
         "planned_focus_duration": 48,
@@ -21,25 +21,50 @@
       },
       {
         "task_id": 2,
-        "task_name": "4343",
+        "task_name": "345",
         "subject": "math",
         "planned_duration": 125,
         "planned_focus_duration": 100,
         "difficulty": 3,
-        "planned_start_time": "10:25",
-        "planned_end_time": "12:30"
+        "planned_start_time": "10:20",
+        "planned_end_time": "12:25"
       }
     ],
-    "actual_execution": [],
+    "actual_execution": [
+      {
+        "task_id": 1,
+        "actual_start_time": "08:45",
+        "actual_end_time": "10:10",
+        "actual_duration": 85,
+        "actual_focus_duration": 68,
+        "post_energy": 7,
+        "completed": true
+      },
+      {
+        "task_id": 2,
+        "actual_start_time": "11:50",
+        "actual_end_time": "14:25",
+        "actual_duration": 155,
+        "actual_focus_duration": 124,
+        "post_energy": 7,
+        "completed": true
+      }
+    ],
     "time_inputs_cache": {
       "start_0": "09:00:00",
       "end_0": "10:00:00",
-      "start_1": "10:25:00",
-      "end_1": "12:30:00",
+      "start_1": "10:20:00",
+      "end_1": "12:25:00",
       "start_2": "09:00:00",
-      "end_2": "10:00:00"
+      "end_2": "10:00:00",
+      "actual_start_0": "08:45:00",
+      "actual_end_0": "10:10:00",
+      "energy_0": 7,
+      "actual_start_1": "11:50:00",
+      "actual_end_1": "14:25:00",
+      "energy_1": 7
     },
-    "last_auto_save": "2025-10-28T18:37:19.925798+08:00",
+    "last_auto_save": "2025-10-28T18:49:49.950834+08:00",
     "state_date": "2025-10-28"
   }
 }
