@@ -12,7 +12,7 @@ class GitHubStateManager:
         self.state_key = "daily_session_state"
         self.initialized = False
         self.last_save_time = None
-        self.min_save_interval = timedelta(seconds=10)  # 最小保存间隔10秒
+        self.min_save_interval = timedelta(seconds=30)  # 最小保存间隔10秒
         self.last_state_hash = None  # 用于检测状态变化
     
     def init_session_state(self):
