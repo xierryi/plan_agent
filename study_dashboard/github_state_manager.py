@@ -24,7 +24,7 @@ class GitHubStateManager:
             self.initialized = True
             return
             
-        # 否则使用默认值
+        # 否则使用默认值 - 确保包含所有必要的属性
         default_states = {
             # 任务状态
             'tasks_confirmed': False,
@@ -52,6 +52,7 @@ class GitHubStateManager:
             'state_date': today
         }
         
+        # 确保所有默认状态都被设置
         for key, value in default_states.items():
             if key not in st.session_state:
                 st.session_state[key] = value
@@ -62,6 +63,9 @@ class GitHubStateManager:
     def auto_save_state(self):
         """自动保存当天状态到 GitHub"""
         try:
+            # 确保所有必要的属性都存在
+            self._ensure_session_state_initialized()
+            
             today = datetime.now().date().isoformat()
             
             # 检查是否是同一天，如果不是则清除旧状态
@@ -81,6 +85,27 @@ class GitHubStateManager:
         except Exception as e:
             st.sidebar.error(f"❌ 自动保存失败: {str(e)}")
             return False
+    
+    def _ensure_session_state_initialized(self):
+        """确保所有必要的 session state 属性都已初始化"""
+        required_states = {
+            'tasks_confirmed': False,
+            'show_final_confirmation': False,
+            'tasks_saved': False,
+            'expander_expanded': True,
+            'current_date': datetime.now().date(),
+            'current_weather': "晴",
+            'current_energy_level': 7,
+            'current_reflection': "",
+            'planned_tasks': [],
+            'actual_execution': [],
+            'time_inputs_cache': {},
+            'state_date': datetime.now().date().isoformat()
+        }
+        
+        for key, default_value in required_states.items():
+            if key not in st.session_state:
+                st.session_state[key] = default_value
     
     def _prepare_save_data(self):
         """准备保存数据（排除不需要持久化的字段）"""
