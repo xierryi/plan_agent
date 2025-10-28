@@ -1,7 +1,7 @@
 {
   "2025-10-28": {
     "tasks_confirmed": false,
-    "show_final_confirmation": false,
+    "show_final_confirmation": true,
     "tasks_saved": false,
     "expander_expanded": true,
     "current_date": "2025-10-28",
@@ -24,12 +24,12 @@
     "time_inputs_cache": {
       "start_0": "09:00:00",
       "end_0": "10:00:00",
-      "start_1": "09:00:57",
-      "end_1": "10:00:57",
-      "start_2": "09:00:57",
-      "end_2": "10:00:57"
+      "start_1": "09:00:00",
+      "end_1": "10:00:00",
+      "start_2": "09:00:00",
+      "end_2": "10:00:00"
     },
-    "last_auto_save": "2025-10-28T05:14:04.913371",
+    "last_auto_save": "2025-10-28T05:14:06.061160",
     "state_date": "2025-10-28"
   }
 }
