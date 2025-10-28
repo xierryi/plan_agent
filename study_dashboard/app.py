@@ -1,5 +1,4 @@
 import streamlit as st
-import streamlit.components.v1 as components
 try:
     import pandas as pd
     import plotly.express as px
@@ -87,56 +86,9 @@ st.set_page_config(
     initial_sidebar_state="collapsed"  # 手机端默认收起侧边栏
 )
 
-def init_mobile_detection():
-    """初始化移动端检测"""
-    if 'mobile_detection_init' not in st.session_state:
-        # 注入JavaScript来检测屏幕尺寸并发送回Streamlit
-        js_code = """
-        <script>
-        function checkMobile() {
-            const isMobile = window.innerWidth < 1000;
-            // 通过URL参数传递结果（这是最可靠的方法）
-            if (isMobile && !window.location.href.includes('is_mobile=true')) {
-                window.location.href = window.location.href + (window.location.href.includes('?') ? '&' : '?') + 'is_mobile=true';
-            } else if (!isMobile && window.location.href.includes('is_mobile=true')) {
-                window.location.href = window.location.href.replace('is_mobile=true', 'is_mobile=false');
-            }
-        }
-        
-        // 初始检测
-        checkMobile();
-        
-        // 监听窗口大小变化
-        window.addEventListener('resize', function() {
-            setTimeout(checkMobile, 300); // 防抖
-        });
-        </script>
-        """
-        components.html(js_code, height=0)
-        st.session_state.mobile_detection_init = True
-
+# 添加移动端检测和优化
 def is_mobile():
-    """检测是否为移动设备 - 可靠版本"""
-    # 初始化检测
-    init_mobile_detection()
-    
-    # 从URL参数获取结果
-    query_params = st.query_params
-    is_mobile_param = query_params.get("is_mobile", [""])[0]
-    
-    if is_mobile_param == "true":
-        return True
-    elif is_mobile_param == "false":
-        return False
-    else:
-        # 如果没有参数，使用默认值（首次加载）
-        # 你可以根据其他线索来判断，比如用户代理（虽然不完全可靠）
-        user_agent = st.query_params.get("user_agent", [""])[0].lower()
-        mobile_keywords = ['mobile', 'android', 'iphone', 'ipad']
-        return any(keyword in user_agent for keyword in mobile_keywords)
-
-# 在应用启动时调用一次
-init_mobile_detection()
+    return True if st.runtime.scriptrunner.script_run_context.is_running_in_browser and st.runtime.scriptrunner.script_run_context.user_agent and "Mobile" in st.runtime.scriptrunner.script_run_context.user_agent else False
 
 if is_mobile():
     st.markdown("""
