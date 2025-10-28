@@ -57,23 +57,23 @@
       {
         "task_id": 1,
         "actual_start_time": "09:00",
-        "actual_end_time": "10:00",
-        "actual_duration": 60,
-        "actual_focus_duration": 48,
+        "actual_end_time": "11:30",
+        "actual_duration": 150,
+        "actual_focus_duration": 120,
         "post_energy": 7,
         "completed": true
       }
     ],
     "daily_summary": {
       "planned_total_time": 60,
-      "actual_total_time": 60,
+      "actual_total_time": 150,
       "planned_focus_time": 48,
-      "actual_focus_time": 48,
+      "actual_focus_time": 120,
       "completion_rate": 1.0,
       "reflection": ""
     },
-    "created_at": "2025-10-28T06:51:30.456621",
-    "updated_at": "2025-10-28T06:51:30.456631"
+    "created_at": "2025-10-28T06:51:55.542657",
+    "updated_at": "2025-10-28T06:51:55.542669"
   },
   {
     "date": "2025-10-27",
