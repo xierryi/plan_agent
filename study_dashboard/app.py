@@ -291,7 +291,9 @@ if page == "今日记录":
             # 动态调整任务数量
             current_task_count = max(3, len(st.session_state.get('planned_tasks', [])))
             task_count = st.number_input("任务数量", min_value=1, max_value=10, value=current_task_count)
-            
+            if task_count:
+                github_state_manager.auto_save_state()  # 保存任务数量变化
+
             for i in range(task_count):
                 st.markdown(f"**任务 {i+1}**")
                 
