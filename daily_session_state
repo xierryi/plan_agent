@@ -11,7 +11,7 @@
     "planned_tasks": [
       {
         "task_id": 1,
-        "task_name": "4747",
+        "task_name": "ntdrn",
         "subject": "math",
         "planned_duration": 60,
         "planned_focus_duration": 48,
@@ -24,12 +24,12 @@
     "time_inputs_cache": {
       "start_0": "09:00:00",
       "end_0": "10:00:00",
-      "start_1": "09:00:01",
-      "end_1": "10:00:01",
-      "start_2": "09:00:01",
-      "end_2": "10:00:01"
+      "start_1": "09:00:00",
+      "end_1": "10:00:00",
+      "start_2": "09:00:00",
+      "end_2": "10:00:00"
     },
-    "last_auto_save": "2025-10-28T06:23:09.145726",
+    "last_auto_save": "2025-10-28T06:32:02.916241",
     "state_date": "2025-10-28"
   }
 }
