@@ -447,7 +447,7 @@ if page == "今日记录":
                 st.session_state.planned_tasks = planned_tasks
 
                 # 智能保存：只要有任务数据就保存（不检查任务名称）
-                github_state_manager.auto_save_state()
+                # github_state_manager.auto_save_state()
                 
                 st.markdown("---")
 
