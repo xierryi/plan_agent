@@ -23,7 +23,6 @@ except ImportError:
     from data_manager import StudyDataManager
     data_manager = StudyDataManager()
 
-# 移除原有的 @st.cache_resource 装饰器
 def parse_time(time_value):
     """通用时间解析函数"""
     if isinstance(time_value, time):
@@ -596,17 +595,23 @@ if page == "今日记录":
             timeline_data = []
             planned_tasks = st.session_state.get('planned_tasks', [])
             for task in planned_tasks:
-                start_dt = datetime.combine(current_date, parse_time(task['planned_start_time']))
-                end_dt = datetime.combine(current_date, parse_time(task['planned_end_time']))
-                
-                timeline_data.append({
-                    'Task': task['task_name'],
-                    'Start': start_dt,
-                    'Finish': end_dt,
-                    'Duration': f"{task['planned_duration']}分钟",
-                    'Subject': task['subject'],
-                    'Difficulty': task['difficulty']
-                })
+                # 确保任务有时间数据
+                if 'planned_start_time' in task and 'planned_end_time' in task:
+                    try:
+                        start_dt = datetime.combine(current_date, parse_time(task['planned_start_time']))
+                        end_dt = datetime.combine(current_date, parse_time(task['planned_end_time']))
+                        
+                        timeline_data.append({
+                            'Task': task['task_name'],
+                            'Start': start_dt,
+                            'Finish': end_dt,
+                            'Duration': f"{task['planned_duration']}分钟",
+                            'Subject': task['subject'],
+                            'Difficulty': task['difficulty']
+                        })
+                    except Exception as e:
+                        # 如果时间解析失败，跳过这个任务
+                        continue
 
             # 按照开始时间排序
             timeline_data.sort(key=lambda x: x['Start'])
