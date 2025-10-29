@@ -416,7 +416,8 @@
       "actual_end_7": "19:30:00",
       "energy_7": 7
     },
-    "last_auto_save": "2025-10-29T12:54:55.413910+08:00",
-    "state_date": "2025-10-29"
+    "last_auto_save": "2025-10-29T12:57:00.333188+08:00",
+    "state_date": "2025-10-29",
+    "plan_source": "new"
   }
 }
