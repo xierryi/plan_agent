@@ -25,14 +25,16 @@ except ImportError:
 
 def parse_time(time_value):
     """通用时间解析函数"""
-    if isinstance(time_value, time):
-        return time_value
-    elif isinstance(time_value, str):
-        try:
+    try:
+        # 如果已经是 time 对象，直接返回
+        if hasattr(time_value, 'hour') and hasattr(time_value, 'minute'):
+            return time_value
+        # 如果是字符串，尝试解析
+        elif isinstance(time_value, str):
             return datetime.strptime(time_value, '%H:%M').time()
-        except ValueError:
+        else:
             return datetime.strptime("09:00", '%H:%M').time()
-    else:
+    except (ValueError, TypeError):
         return datetime.strptime("09:00", '%H:%M').time()
 
 def check_time_conflicts(planned_tasks, date):
