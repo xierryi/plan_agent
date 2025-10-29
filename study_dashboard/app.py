@@ -429,11 +429,7 @@ if page == "今日记录":
                     if start_cache_key in time_inputs_cache:
                         default_start = time_inputs_cache[start_cache_key]
                     elif 'planned_start_time' in saved_task:
-                        start_time_value = saved_task['planned_start_time']
-                        if isinstance(start_time_value, str):
-                            default_start = parse_time(start_time_value)
-                        else:
-                            default_start = start_time_value
+                        default_start = parse_time(saved_task['planned_start_time'])
                     else:
                         default_start = datetime.now().time().replace(hour=9, minute=0)
                     
@@ -454,11 +450,7 @@ if page == "今日记录":
                     if end_cache_key in time_inputs_cache:
                         default_end = time_inputs_cache[end_cache_key]
                     elif 'planned_end_time' in saved_task:
-                        end_time_value = saved_task['planned_end_time']
-                        if isinstance(end_time_value, str):
-                            default_end = parse_time(end_time_value)
-                        else:
-                            default_end = end_time_value
+                        default_end = parse_time(saved_task['planned_end_time'])
                     else:
                         default_end = datetime.now().time().replace(hour=10, minute=0)
                     
@@ -584,8 +576,8 @@ if page == "今日记录":
                 # 确保任务有时间数据
                 if 'planned_start_time' in task and 'planned_end_time' in task:
                     try:
-                        start_dt = datetime.combine(current_date, parse_time(task['planned_start_time']))
-                        end_dt = datetime.combine(current_date, parse_time(task['planned_end_time']))
+                        start_dt = datetime.combine(current_date, parse_time(task.get('planned_start_time')))
+                        end_dt = datetime.combine(current_date, parse_time(task.get('planned_end_time')))
                         
                         timeline_data.append({
                             'Task': task['task_name'],
@@ -649,13 +641,7 @@ if page == "今日记录":
                     if actual_start_cache_key in time_inputs_cache:
                         default_actual_start = time_inputs_cache[actual_start_cache_key]
                     elif 'actual_start_time' in saved_actual:
-                        try:
-                            if isinstance(saved_actual['actual_start_time'], str):
-                                default_actual_start = parse_time(saved_actual['actual_start_time'])
-                            else:
-                                default_actual_start = saved_actual['actual_start_time']
-                        except:
-                            default_actual_start = parse_time(task['planned_start_time'])
+                        default_actual_start = parse_time(saved_actual['actual_start_time'])
                     else:
                         default_actual_start = parse_time(task['planned_start_time'])
                     
@@ -674,13 +660,7 @@ if page == "今日记录":
                     if actual_end_cache_key in time_inputs_cache:
                         default_actual_end = time_inputs_cache[actual_end_cache_key]
                     elif 'actual_end_time' in saved_actual:
-                        try:
-                            if isinstance(saved_actual['actual_end_time'], str):
-                                default_actual_end = parse_time(saved_actual['actual_end_time'])
-                            else:
-                                default_actual_end = saved_actual['actual_end_time']
-                        except:
-                            default_actual_end = parse_time(task['planned_end_time'])
+                        default_actual_end = parse_time(saved_actual['actual_end_time'])
                     else:
                         default_actual_end = parse_time(task['planned_end_time'])
                     
@@ -788,21 +768,20 @@ if page == "今日记录":
                         planned_tasks_for_save = []
                         for task in sorted_tasks:
                             task_copy = task.copy()
-                            # 确保时间是字符串格式
-                            if 'planned_start_time' in task_copy and isinstance(task_copy['planned_start_time'], time):
-                                task_copy['planned_start_time'] = task_copy['planned_start_time'].strftime('%H:%M')
-                            if 'planned_end_time' in task_copy and isinstance(task_copy['planned_end_time'], time):
-                                task_copy['planned_end_time'] = task_copy['planned_end_time'].strftime('%H:%M')
+                            if 'planned_start_time' in task_copy:
+                                task_copy['planned_start_time'] = parse_time(task_copy['planned_start_time']).strftime('%H:%M')
+                            if 'planned_end_time' in task_copy:
+                                task_copy['planned_end_time'] = parse_time(task_copy['planned_end_time']).strftime('%H:%M')
                             planned_tasks_for_save.append(task_copy)
                         
                         actual_execution_for_save = []
                         for execution in st.session_state.get('actual_execution', []):
                             exec_copy = execution.copy()
                             # 确保时间是字符串格式
-                            if 'actual_start_time' in exec_copy and isinstance(exec_copy['actual_start_time'], time):
-                                exec_copy['actual_start_time'] = exec_copy['actual_start_time'].strftime('%H:%M')
-                            if 'actual_end_time' in exec_copy and isinstance(exec_copy['actual_end_time'], time):
-                                exec_copy['actual_end_time'] = exec_copy['actual_end_time'].strftime('%H:%M')
+                            if 'actual_start_time' in exec_copy:
+                                exec_copy['actual_start_time'] = parse_time(exec_copy['actual_start_time']).strftime('%H:%M')
+                            if 'actual_end_time' in exec_copy:
+                                exec_copy['actual_end_time'] = parse_time(exec_copy['actual_end_time']).strftime('%H:%M')
                             actual_execution_for_save.append(exec_copy)
                         
                         success = data_manager.add_daily_record(
