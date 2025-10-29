@@ -645,7 +645,7 @@ if page == "今日记录":
             st.markdown(f"##### ✅ 实际执行情况")
             # 按照开始时间排序
             planned_tasks = st.session_state.get('planned_tasks', [])
-            sorted_tasks = sorted(planned_tasks, key=lambda x: parse_time(x['planned_start_time'], '%H:%M'))
+            sorted_tasks = sorted(planned_tasks, key=lambda x: parse_time(x['planned_start_time'])
 
             for i, task in enumerate(sorted_tasks):
                 st.markdown(f"##### {task['task_name']}")
