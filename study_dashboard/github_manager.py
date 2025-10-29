@@ -98,6 +98,76 @@ class GitHubDataManager:
         except Exception as e:
             st.error(f"❌ 保存到 GitHub 失败: {e}")
             return False
+
+    # 新增方法：支持状态管理器保存原始内容
+    def save_raw_content(self, filename: str, content: str, commit_message: str = None):
+        """保存原始内容到指定文件"""
+        if not self.is_connected():
+            return False
+            
+        try:
+            if commit_message is None:
+                commit_message = f"更新 {filename} {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+                
+            # 检查文件是否存在
+            try:
+                contents = self.repo.get_contents(filename)
+                # 文件存在，更新它
+                self.repo.update_file(
+                    filename,
+                    commit_message,
+                    content,
+                    contents.sha
+                )
+            except GithubException:
+                # 文件不存在，创建新文件
+                self.repo.create_file(
+                    filename,
+                    commit_message,
+                    content
+                )
+            
+            return True
+            
+        except Exception as e:
+            st.error(f"❌ 保存文件 {filename} 失败: {e}")
+            return False
+
+    # 新增方法：加载原始内容
+    def load_raw_content(self, filename: str) -> str:
+        """从指定文件加载原始内容"""
+        if not self.is_connected():
+            return None
+            
+        try:
+            contents = self.repo.get_contents(filename)
+            file_content = base64.b64decode(contents.content).decode('utf-8')
+            return file_content
+        except GithubException as e:
+            if e.status == 404:
+                return None
+            else:
+                st.error(f"❌ 加载文件 {filename} 失败: {e}")
+                return None
+        except Exception as e:
+            st.error(f"❌ 加载文件时出错: {e}")
+            return None
+
+    # 新增方法：检查文件是否存在
+    def file_exists(self, filename: str) -> bool:
+        """检查文件是否存在"""
+        if not self.is_connected():
+            return False
+            
+        try:
+            self.repo.get_contents(filename)
+            return True
+        except GithubException as e:
+            if e.status == 404:
+                return False
+            return False
+        except Exception:
+            return False
     
     def add_daily_record(self, date, weather, energy_level, planned_tasks, actual_execution, daily_summary):
         """添加每日记录到 GitHub"""
