@@ -21,24 +21,18 @@ class GitHubStateManager:
         self.last_state_hash = None
     
     def init_session_state(self):
-        """智能初始化 session state - 支持跨日计划继承"""
+        """初始化 session state - 直接加载当前日期的状态"""
         if self.initialized:
             return
             
         today = datetime.now(beijing_tz).date()
         today_iso = today.isoformat()
         
-        # 1. 首先尝试加载今天的状态
-        if self._load_today_state(today_iso):
-            self.initialized = True
-            return
-        
-        # 2. 如果今天没有状态，检查是否有可继承的最近计划
-        inherited_data = self._find_inheritable_plan(today)
-        if inherited_data:
-            self._initialize_with_inheritance(today_iso, inherited_data)
+        # 直接尝试加载今天的状态
+        if self.load_from_github(today_iso):
+            st.sidebar.success("✅ 今日状态恢复成功")
         else:
-            # 3. 完全新的开始
+            # 初始化新状态
             self._initialize_new_day(today_iso)
         
         self.initialized = True
@@ -50,85 +44,12 @@ class GitHubStateManager:
             return True
         return False
     
-    def _find_inheritable_plan(self, today: datetime.date) -> dict:
-        """查找可继承的计划数据"""
-        if not self.github_manager.is_connected():
-            return None
-            
-        try:
-            all_states = self._load_all_states_from_github()
-            if not all_states:
-                return None
-            
-            # 按日期排序，最近的在前
-            sorted_dates = sorted(all_states.keys(), reverse=True)
-            
-            for date_str in sorted_dates:
-                state_date = datetime.fromisoformat(date_str).date()
-                days_diff = (today - state_date).days
-                
-                # 只考虑最近3天内的计划
-                if 1 <= days_diff <= 3:
-                    state_data = all_states[date_str]
-                    planned_tasks = state_data.get('planned_tasks', [])
-                    
-                    # 检查是否有可继承的计划任务
-                    if (planned_tasks and 
-                        len(planned_tasks) > 0 and 
-                        self._has_valid_tasks(planned_tasks)):
-                        
-                        return {
-                            'source_date': date_str,
-                            'planned_tasks': planned_tasks,
-                            'weather': state_data.get('current_weather', '晴'),
-                            'energy_level': state_data.get('current_energy_level', 7)
-                        }
-            
-            return None
-            
-        except Exception:
-            return None
-    
     def _has_valid_tasks(self, tasks: list) -> bool:
         """检查任务列表是否包含有效任务"""
         for task in tasks:
             if task.get('task_name', '').strip():
                 return True
         return False
-    
-    def _initialize_with_inheritance(self, today_iso: str, inherited_data: dict):
-        """使用继承的数据初始化"""
-        source_date = inherited_data['source_date']
-        
-        st.sidebar.success(f"🔄 检测到 {source_date} 的计划，已加载为今日模板")
-        
-        # 设置基础状态
-        default_states = {
-            'tasks_confirmed': False,
-            'show_final_confirmation': False,
-            'tasks_saved': False,
-            'expander_expanded': True,
-            'current_date': datetime.now(beijing_tz).date(),
-            'current_weather': inherited_data.get('weather', '晴'),
-            'current_energy_level': inherited_data.get('energy_level', 7),
-            'current_reflection': "",
-            'planned_tasks': inherited_data['planned_tasks'],
-            'actual_execution': [],
-            'time_inputs_cache': {},
-            'last_auto_save': None,
-            'state_date': today_iso,
-            'plan_source': f"inherited_from_{source_date}"  # 记录计划来源
-        }
-        
-        for key, value in default_states.items():
-            if key not in st.session_state:
-                st.session_state[key] = value
-        
-        # 立即保存继承的状态
-        self.auto_save_state(force=True)
-        
-        # 显示继承通知
-        st.toast(f"📋 已从 {source_date} 继承计划，请根据今日情况调整", icon="📋")
     
     def _initialize_new_day(self, today_iso: str):
         """完全新的初始化"""
@@ -229,59 +150,31 @@ class GitHubStateManager:
             st.session_state.plan_source = "new"
     
     def _handle_date_change(self, new_date: str):
-        """处理日期变化"""
+        """处理日期变化 - 直接加载目标日期的状态"""
         old_date = st.session_state.get('state_date')
-        st.sidebar.info(f"📅 检测到日期变化: {old_date} → {new_date}")
         
         # 更新状态日期
         st.session_state.state_date = new_date
         
-        # 如果切换到今天，检查是否有可继承的计划
-        today = datetime.now(beijing_tz).date().isoformat()
-        if new_date == today:
-            # 尝试加载今天的状态
-            if not self.load_from_github(today):
-                # 如果今天没有状态，检查是否有可继承的计划
-                inherited_data = self._find_inheritable_plan(datetime.now(beijing_tz).date())
-                if inherited_data:
-                    self._apply_inherited_plan(today, inherited_data)
-                    return
-        
-        # 检查是否只是状态日期不对，但实际日期正确
-        current_date = st.session_state.get('current_date')
-        if (current_date and 
-            current_date.isoformat() == new_date):
-            # 只是状态日期需要更新，保持其他数据
-            return
-        
-        # 真正的日期变化，清除执行数据但保留计划
-        st.session_state.actual_execution = []
-        st.session_state.time_inputs_cache = {}
-        st.session_state.current_reflection = ""
-        st.session_state.tasks_saved = False
-        st.session_state.show_final_confirmation = False
-        st.session_state.plan_source = "date_changed"
-
-    def _apply_inherited_plan(self, today_iso: str, inherited_data: dict):
-        """应用继承的计划"""
-        source_date = inherited_data['source_date']
-        
-        st.sidebar.success(f"🔄 从 {source_date} 继承计划到今天")
-        
-        # 更新计划数据但保留今天的其他设置
-        st.session_state.planned_tasks = inherited_data['planned_tasks']
-        st.session_state.state_date = today_iso
-        st.session_state.plan_source = f"inherited_from_{source_date}"
-        
-        # 清除执行相关数据
-        st.session_state.actual_execution = []
-        st.session_state.time_inputs_cache = {}
-        st.session_state.current_reflection = ""
-        st.session_state.tasks_saved = False
-        st.session_state.show_final_confirmation = False
-        
-        # 立即保存
-        self.auto_save_state(force=True)
+        # 直接尝试加载目标日期的状态
+        if self.load_from_github(new_date):
+            st.sidebar.success(f"✅ 已加载 {new_date} 的计划")
+        else:
+            # 如果目标日期没有保存的状态，初始化空状态
+            st.sidebar.info(f"📝 {new_date} 没有保存的计划")
+            
+            # 清除执行数据，但保持其他设置
+            st.session_state.actual_execution = []
+            st.session_state.time_inputs_cache = {}
+            st.session_state.current_reflection = ""
+            st.session_state.tasks_saved = False
+            st.session_state.show_final_confirmation = False
+            st.session_state.plan_source = "new_date"
+            
+            # 如果切换到未来日期，保持计划任务；如果切换到过去，清空
+            if new_date < datetime.now(beijing_tz).date().isoformat():
+                st.session_state.planned_tasks = []
+                st.session_state.tasks_confirmed = False
     
     def get_state_info(self):
         """增强的状态信息"""

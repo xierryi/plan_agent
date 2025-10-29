@@ -45,24 +45,15 @@ def check_time_conflicts(planned_tasks, date):
     for task in planned_tasks:
         if 'planned_start_time' in task and 'planned_end_time' in task:
             try:
-                # 处理时间格式：可能是字符串或 time 对象
-                start_time_str = task['planned_start_time']
-                end_time_str = task['planned_end_time']
-                
-                # 如果是 time 对象，转换为字符串
-                if isinstance(start_time_str, time):
-                    start_time_str = start_time_str.strftime('%H:%M')
-                if isinstance(end_time_str, time):
-                    end_time_str = end_time_str.strftime('%H:%M')
-                
-                start_time = datetime.strptime(start_time_str, '%H:%M').time()
-                end_time = datetime.strptime(end_time_str, '%H:%M').time()
+                # 直接使用 parse_time，不需要手动转换
+                start_time = parse_time(task['planned_start_time'])
+                end_time = parse_time(task['planned_end_time'])
                 
                 start_dt = datetime.combine(date, start_time)
                 end_dt = datetime.combine(date, end_time)
                 
-                # 处理跨天情况
-                if end_dt < start_dt:
+                # 处理跨天情况（比如23:00到01:00）
+                if end_dt <= start_dt:
                     end_dt += timedelta(days=1)
                 
                 time_ranges.append({
@@ -70,7 +61,9 @@ def check_time_conflicts(planned_tasks, date):
                     'start': start_dt,
                     'end': end_dt
                 })
-            except (ValueError, TypeError) as e:
+                
+            except Exception as e:
+                # 如果时间解析失败，跳过这个任务
                 continue
     
     # 检查时间重叠
@@ -118,47 +111,35 @@ def create_plan_management_sidebar():
     st.sidebar.subheader("📋 计划管理")
     
     state_info = github_state_manager.get_state_info()
+    current_date = st.session_state.get('current_date', datetime.now().date())
+    today = datetime.now().date()
     
-    # 显示计划来源信息
-    plan_source = state_info.get('plan_source', 'new')
-    if plan_source.startswith('inherited_from_'):
-        source_date = plan_source.replace('inherited_from_', '')
-        st.sidebar.info(f"📥 计划来源: {source_date}")
-    elif plan_source == 'new':
-        st.sidebar.info("🆕 全新计划")
+    # 显示当前状态
+    if current_date == today:
+        st.sidebar.success("📅 今天")
+        st.sidebar.write(f"计划任务: {state_info['planned_task_count']}个")
+    elif current_date > today:
+        st.sidebar.warning(f"📅 未来计划")
+        st.sidebar.write(f"日期: {current_date}")
+        st.sidebar.write(f"计划任务: {state_info['planned_task_count']}个")
+    else:
+        st.sidebar.info(f"📅 过往记录")
+        st.sidebar.write(f"日期: {current_date}")
+        st.sidebar.write(f"计划任务: {state_info['planned_task_count']}个")
     
-    # 日期状态提醒
-    if not state_info['is_today']:
-        st.sidebar.warning(f"📅 显示 {state_info['state_date']} 的状态")
+    # 切换到今天的按钮
+    if current_date != today:
         if st.sidebar.button("🔄 切换到今天"):
-            github_state_manager.clear_current_state()
+            github_state_manager._handle_date_change(today.isoformat())
+            st.session_state.current_date = today
             st.rerun()
     
-    # 计划继承功能
-    if state_info['is_today'] and not state_info['has_planned_tasks']:
-        st.sidebar.markdown("**继承过往计划:**")
-        col1, col2 = st.sidebar.columns(2)
-        with col1:
-            if st.button("昨天计划"):
-                yesterday = (datetime.now() - timedelta(days=1)).date().isoformat()
-                if github_state_manager.load_from_github(yesterday):
-                    # 转换为今天
-                    st.session_state.state_date = datetime.now().date().isoformat()
-                    st.session_state.current_date = datetime.now().date()
-                    st.session_state.plan_source = f"inherited_from_{yesterday}"
-                    github_state_manager.manual_save_state()
-                    st.sidebar.success("✅ 已继承昨天计划")
-                    st.rerun()
-        with col2:
-            if st.button("前天计划"):
-                day_before = (datetime.now() - timedelta(days=2)).date().isoformat()
-                if github_state_manager.load_from_github(day_before):
-                    st.session_state.state_date = datetime.now().date().isoformat()
-                    st.session_state.current_date = datetime.now().date()
-                    st.session_state.plan_source = f"inherited_from_{day_before}"
-                    github_state_manager.manual_save_state()
-                    st.sidebar.success("✅ 已继承前天计划")
-                    st.rerun()
+    # 清除当前日期的计划（只在有计划时显示）
+    if state_info['has_planned_tasks']:
+        if st.sidebar.button("🗑️ 清除当前计划", type="secondary"):
+            github_state_manager.clear_current_state()
+            st.sidebar.success("计划已清除")
+            st.rerun()
 
 # 在页面中调用
 create_plan_management_sidebar()
@@ -266,9 +247,16 @@ def create_state_sidebar():
     
     # 状态日期提醒
     if not state_info['is_today']:
-        st.sidebar.warning(f"⚠️ 显示 {state_info['state_date']} 的状态")
-        if st.sidebar.button("🆕 开始今天"):
-            github_state_manager.clear_current_state()
+        current_date = st.session_state.get('current_date')
+        if current_date:
+            if current_date > datetime.now().date():
+                st.sidebar.warning(f"📅 未来计划: {state_info['state_date']}")
+            else:
+                st.sidebar.info(f"📅 过往记录: {state_info['state_date']}")
+        
+        if st.sidebar.button("🆕 切换到今天"):
+            github_state_manager._handle_date_change(datetime.now().date().isoformat())
+            st.session_state.current_date = datetime.now().date()
             st.rerun()
     
     # 在侧边栏底部添加调试信息
@@ -343,7 +331,15 @@ st.markdown("""
 
 # 页面1: 今日记录
 if page == "今日记录":
-    st.markdown(f"##### 📝 今日学习记录")
+    current_date = st.session_state.get('current_date', datetime.now().date())
+    today = datetime.now().date()
+    
+    if current_date == today:
+        st.markdown(f"##### 📝 今日学习记录")
+    elif current_date > today:
+        st.markdown(f"##### 📝 {current_date} 未来计划")
+    else:
+        st.markdown(f"##### 📝 {current_date} 学习记录")
 
     with st.form("daily_record"):
         # === 基本信息区域 - 响应式3列布局 ===
@@ -360,23 +356,6 @@ if page == "今日记录":
                 st.success("📅 今天")
             elif current_date > today:
                 st.warning("📅 未来计划")
-            else:
-                st.info("📅 过往记录")
-            
-            # 日期变化时的智能处理
-            if current_date != st.session_state.get('current_date'):
-                old_date = st.session_state.get('current_date')
-                st.session_state.current_date = current_date
-                
-                # 检查是否是切换到新的一天
-                if current_date == today and old_date != today:
-                    st.sidebar.info("🔄 切换到今天，正在检查是否有可继承的计划...")
-                    # 让状态管理器处理日期变化
-                    github_state_manager._handle_date_change(today.isoformat())
-                
-                # 保存状态
-                github_state_manager.auto_save_state(force=True)
-                st.rerun()
                 
         with info_cols[1]:
             current_weather_value = st.session_state.get('current_weather', "晴")
@@ -452,7 +431,7 @@ if page == "今日记录":
                     elif 'planned_start_time' in saved_task:
                         start_time_value = saved_task['planned_start_time']
                         if isinstance(start_time_value, str):
-                            default_start = datetime.strptime(start_time_value, '%H:%M').time()
+                            default_start = parse_time(start_time_value)
                         else:
                             default_start = start_time_value
                     else:
@@ -477,7 +456,7 @@ if page == "今日记录":
                     elif 'planned_end_time' in saved_task:
                         end_time_value = saved_task['planned_end_time']
                         if isinstance(end_time_value, str):
-                            default_end = datetime.strptime(end_time_value, '%H:%M').time()
+                            default_end = parse_time(end_time_value)
                         else:
                             default_end = end_time_value
                     else:
@@ -565,7 +544,12 @@ if page == "今日记录":
                             st.session_state.tasks_confirmed = True
                             st.session_state.show_final_confirmation = False
                             st.session_state.expander_expanded = False
-                            st.success(f"✅ 已确认 {len(st.session_state.planned_tasks)} 个计划任务！")
+                            if current_date == today:
+                                st.success(f"✅ 已确认 {len(st.session_state.planned_tasks)} 个今日计划任务！")
+                            elif current_date > today:
+                                st.success(f"✅ 已确认 {len(st.session_state.planned_tasks)} 个未来计划任务！")
+                            else:
+                                st.success(f"✅ 已确认 {len(st.session_state.planned_tasks)} 个计划任务！")
                             st.rerun()
             else:
                 submit_planned_tasks = st.form_submit_button(
@@ -667,13 +651,13 @@ if page == "今日记录":
                     elif 'actual_start_time' in saved_actual:
                         try:
                             if isinstance(saved_actual['actual_start_time'], str):
-                                default_actual_start = datetime.strptime(saved_actual['actual_start_time'], '%H:%M').time()
+                                default_actual_start = parse_time(saved_actual['actual_start_time'])
                             else:
                                 default_actual_start = saved_actual['actual_start_time']
                         except:
-                            default_actual_start = datetime.strptime(task['planned_start_time'], '%H:%M').time()
+                            default_actual_start = parse_time(task['planned_start_time'])
                     else:
-                        default_actual_start = datetime.strptime(task['planned_start_time'], '%H:%M').time()
+                        default_actual_start = parse_time(task['planned_start_time'])
                     
                     actual_start_time = st.time_input(
                         "实际开始时间",
@@ -692,13 +676,13 @@ if page == "今日记录":
                     elif 'actual_end_time' in saved_actual:
                         try:
                             if isinstance(saved_actual['actual_end_time'], str):
-                                default_actual_end = datetime.strptime(saved_actual['actual_end_time'], '%H:%M').time()
+                                default_actual_end = parse_time(saved_actual['actual_end_time'])
                             else:
                                 default_actual_end = saved_actual['actual_end_time']
                         except:
-                            default_actual_end = datetime.strptime(task['planned_end_time'], '%H:%M').time()
+                            default_actual_end = parse_time(task['planned_end_time'])
                     else:
-                        default_actual_end = datetime.strptime(task['planned_end_time'], '%H:%M').time()
+                        default_actual_end = parse_time(task['planned_end_time'])
                     
                     actual_end_time = st.time_input(
                         "实际结束时间",
@@ -839,7 +823,12 @@ if page == "今日记录":
                         
                         if success:
                             st.balloons()
-                            st.success("🎉 今日记录保存成功！")
+                            if current_date == today:
+                                st.success("🎉 今日记录保存成功！")
+                            elif current_date > today:
+                                st.success(f"🎉 {current_date} 的未来计划保存成功！")
+                            else:
+                                st.success(f"🎉 {current_date} 的记录保存成功！")
                         else:
                             st.error("❌ 保存失败，请检查数据格式")
                             
