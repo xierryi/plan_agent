@@ -1,0 +1,10 @@
+name: 我的第一个Action
+
+on: [push]
+
+jobs:
+  hello:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 说你好
+        run: echo "🎉 恭喜！你的第一个Action运行成功了！"
