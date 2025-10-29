@@ -208,5 +208,37 @@
     },
     "last_auto_save": "2025-10-28T22:35:38.108706+08:00",
     "state_date": "2025-10-28"
+  },
+  "2025-10-29": {
+    "tasks_confirmed": false,
+    "show_final_confirmation": false,
+    "tasks_saved": false,
+    "expander_expanded": true,
+    "current_date": "2025-10-29",
+    "current_weather": "晴",
+    "current_energy_level": 9,
+    "current_reflection": "",
+    "planned_tasks": [
+      {
+        "task_id": 1,
+        "task_name": "核磁共振（10月31日例会）",
+        "subject": "physics",
+        "planned_duration": 120,
+        "planned_focus_duration": 96,
+        "difficulty": 4,
+        "planned_start_time": "08:20",
+        "planned_end_time": "10:20"
+      }
+    ],
+    "actual_execution": [],
+    "time_inputs_cache": {
+      "start_0": "08:20:00",
+      "end_0": "10:20:00",
+      "start_1": "09:00:40",
+      "end_1": "10:00:40"
+    },
+    "last_auto_save": "2025-10-29T19:21:06.618711+08:00",
+    "state_date": "2025-10-29",
+    "plan_source": "new"
   }
 }
