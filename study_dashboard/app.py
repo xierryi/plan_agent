@@ -24,6 +24,17 @@ except ImportError:
     data_manager = StudyDataManager()
 
 # 移除原有的 @st.cache_resource 装饰器
+def parse_time(time_value):
+    """通用时间解析函数"""
+    if isinstance(time_value, time):
+        return time_value
+    elif isinstance(time_value, str):
+        try:
+            return datetime.strptime(time_value, '%H:%M').time()
+        except ValueError:
+            return datetime.strptime("09:00", '%H:%M').time()
+    else:
+        return datetime.strptime("09:00", '%H:%M').time()
 
 def check_time_conflicts(planned_tasks, date):
     """检查任务时间是否重叠"""
@@ -585,8 +596,8 @@ if page == "今日记录":
             timeline_data = []
             planned_tasks = st.session_state.get('planned_tasks', [])
             for task in planned_tasks:
-                start_dt = datetime.combine(current_date, datetime.strptime(task['planned_start_time'], '%H:%M').time())
-                end_dt = datetime.combine(current_date, datetime.strptime(task['planned_end_time'], '%H:%M').time())
+                start_dt = datetime.combine(current_date, parse_time(task['planned_start_time']))
+                end_dt = datetime.combine(current_date, parse_time(task['planned_end_time']))
                 
                 timeline_data.append({
                     'Task': task['task_name'],
