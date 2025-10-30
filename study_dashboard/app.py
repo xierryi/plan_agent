@@ -263,7 +263,7 @@ def create_state_sidebar():
     with st.sidebar.expander("🔧 调试信息"):
         state_info = github_state_manager.get_state_info()
         st.write("GitHub 连接:", "✅ 已连接" if state_info['github_connected'] else "❌ 未连接")
-        st.write("状态日期:", state_info['state_date'])
+        st.write("状态日期:", state_info['current_date'])
         st.write("计划任务数:", state_info['planned_task_count'])
         st.write("任务确认:", state_info['tasks_confirmed'])
         st.write("今日状态:", state_info['is_today'])
