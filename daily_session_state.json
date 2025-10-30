@@ -68,7 +68,7 @@
   },
   "2025-10-30": {
     "tasks_confirmed": false,
-    "show_final_confirmation": false,
+    "show_final_confirmation": true,
     "tasks_saved": false,
     "expander_expanded": true,
     "current_date": "2025-10-31",
@@ -78,7 +78,7 @@
     "planned_tasks": [
       {
         "task_id": 1,
-        "task_name": "1",
+        "task_name": "233",
         "subject": "math",
         "planned_duration": 60,
         "planned_focus_duration": 48,
@@ -94,7 +94,7 @@
       "start_1": "09:00:00",
       "end_1": "10:00:00"
     },
-    "last_auto_save": "2025-10-30T14:57:59.614179+08:00",
+    "last_auto_save": "2025-10-30T14:58:30.421502+08:00",
     "state_date": "2025-10-30",
     "plan_source": "new"
   }
