@@ -23,8 +23,6 @@ except ImportError:
     from data_manager import StudyDataManager
     data_manager = StudyDataManager()
 
-input_placeholder = st.empty()
-
 def parse_time(time_value):
     """通用时间解析函数"""
     try:
@@ -349,7 +347,7 @@ if page == "今日记录":
         
         info_cols = st.columns(3)
         with info_cols[0]:
-            with input_placeholder.container():
+            with st.empty().container():
                 selected_date = st.date_input("日期", value=current_date, key="date_input")
             
             if selected_date != current_date:
