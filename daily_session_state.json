@@ -1,9 +1,9 @@
 {
   "2025-10-29": {
-    "tasks_confirmed": false,
+    "tasks_confirmed": true,
     "show_final_confirmation": false,
     "tasks_saved": false,
-    "expander_expanded": true,
+    "expander_expanded": false,
     "current_date": "2025-10-29",
     "current_weather": "晴",
     "current_energy_level": 7,
@@ -11,7 +11,74 @@
     "planned_tasks": [
       {
         "task_id": 1,
-        "task_name": "\"new\"",
+        "task_name": "锻炼",
+        "subject": "other",
+        "planned_duration": 30,
+        "planned_focus_duration": 24,
+        "difficulty": 3,
+        "planned_start_time": "20:30",
+        "planned_end_time": "21:00"
+      },
+      {
+        "task_id": 2,
+        "task_name": "群论",
+        "subject": "math",
+        "planned_duration": 60,
+        "planned_focus_duration": 48,
+        "difficulty": 3,
+        "planned_start_time": "21:30",
+        "planned_end_time": "22:30"
+      }
+    ],
+    "actual_execution": [
+      {
+        "task_id": 1,
+        "actual_start_time": "20:30",
+        "actual_end_time": "21:00",
+        "actual_duration": 30,
+        "actual_focus_duration": 24,
+        "post_energy": 7,
+        "completed": true
+      },
+      {
+        "task_id": 2,
+        "actual_start_time": "21:30",
+        "actual_end_time": "22:30",
+        "actual_duration": 60,
+        "actual_focus_duration": 48,
+        "post_energy": 7,
+        "completed": true
+      }
+    ],
+    "time_inputs_cache": {
+      "start_0": "20:30:00",
+      "end_0": "21:00:00",
+      "start_1": "21:30:00",
+      "end_1": "22:30:00",
+      "actual_start_0": "20:30:00",
+      "actual_end_0": "21:00:00",
+      "energy_0": 7,
+      "actual_start_1": "21:30:00",
+      "actual_end_1": "22:30:00",
+      "energy_1": 7
+    },
+    "last_auto_save": "2025-10-29T20:58:36.207855+08:00",
+    "state_date": "2025-10-29",
+    "plan_source": "new"
+  },
+  "2025-10-30": {
+    "tasks_confirmed": false,
+    "show_final_confirmation": false,
+    "tasks_saved": false,
+    "expander_expanded": true,
+    "current_date": "2025-10-30",
+    "current_weather": "晴",
+    "current_energy_level": 7,
+    "current_reflection": "",
+    "planned_tasks": [
+      {
+        "task_id": 1,
+        "task_name": "1",
         "subject": "math",
         "planned_duration": 60,
         "planned_focus_duration": 48,
@@ -27,8 +94,8 @@
       "start_1": "09:00:00",
       "end_1": "10:00:00"
     },
-    "last_auto_save": "2025-10-29T19:29:11.266260+08:00",
-    "state_date": "2025-10-29",
+    "last_auto_save": "2025-10-30T14:45:30.970127+08:00",
+    "state_date": "2025-10-30",
     "plan_source": "new"
   }
 }
