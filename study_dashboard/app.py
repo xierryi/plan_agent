@@ -347,7 +347,7 @@ if page == "今日记录":
         
         info_cols = st.columns(3)
         with info_cols[0]:
-            selected_date = st.date_input("日期", value=current_date, key="date_input")
+            selected_date = st.date_input("日期", value=st.session_state.current_date, key="date_input")
             
             if selected_date != current_date:
                 st.session_state.current_date = selected_date
