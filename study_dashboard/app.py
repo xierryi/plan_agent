@@ -112,7 +112,6 @@ def create_plan_management_sidebar():
     
     state_info = github_state_manager.get_state_info()
     current_date = st.session_state.get('current_date', datetime.now().date())
-    today = datetime.now().date()
     
     # 显示当前状态
     if state_info['date_status'] == 'today':
@@ -366,7 +365,6 @@ if page == "今日记录":
         st.markdown(f"##### 📝 {current_date} 学习记录")
 
     with st.form("daily_record"):
-        # === 基本信息区域 - 响应式3列布局 ===
         # === 基本信息区域 - 响应式3列布局 ===
         st.markdown(f"###### 📅 基本信息")
 
