@@ -1,4 +1,3 @@
-# github_state_manager.py
 import streamlit as st
 import json
 from datetime import datetime, time, timedelta
@@ -10,7 +9,7 @@ import hashlib
 beijing_tz = pytz.timezone('Asia/Shanghai')
 
 class GitHubStateManager:
-    """使用 GitHub 作为持久化存储的状态管理器 - 长期解决方案"""
+    """使用 GitHub 作为持久化存储的状态管理器 - 以计划日期为主键"""
     
     def __init__(self):
         self.github_manager = GitHubDataManager()
@@ -21,44 +20,34 @@ class GitHubStateManager:
         self.last_state_hash = None
     
     def init_session_state(self):
-        """初始化 session state - 直接加载当前日期的状态"""
+        """初始化 session state - 以当前计划日期为主键"""
         if self.initialized:
             return
             
-        today = datetime.now(beijing_tz).date()
-        today_iso = today.isoformat()
+        # 获取当前选择的计划日期
+        current_plan_date = st.session_state.get('current_date', datetime.now(beijing_tz).date())
+        plan_date_iso = current_plan_date.isoformat()
         
-        # 直接尝试加载今天的状态
-        if self.load_from_github(today_iso):
-            st.sidebar.success("✅ 今日状态恢复成功")
+        # 尝试加载当前计划日期的状态
+        if self.load_from_github(plan_date_iso):
+            st.sidebar.success(f"✅ {current_plan_date} 的计划状态恢复成功")
         else:
             # 初始化新状态
-            self._initialize_new_day(today_iso)
+            self._initialize_new_plan(plan_date_iso)
         
         self.initialized = True
     
-    def _load_today_state(self, today_iso: str) -> bool:
-        """加载今天的状态"""
-        if self.load_from_github(today_iso):
-            st.sidebar.success("✅ 今日状态恢复成功")
-            return True
-        return False
-    
-    def _has_valid_tasks(self, tasks: list) -> bool:
-        """检查任务列表是否包含有效任务"""
-        for task in tasks:
-            if task.get('task_name', '').strip():
-                return True
-        return False
-    
-    def _initialize_new_day(self, today_iso: str):
-        """完全新的初始化"""
+    def _initialize_new_plan(self, plan_date_iso: str):
+        """为新的计划日期初始化状态"""
+        plan_date = datetime.fromisoformat(plan_date_iso).date()
+        today = datetime.now(beijing_tz).date()
+        
         default_states = {
             'tasks_confirmed': False,
             'show_final_confirmation': False,
             'tasks_saved': False,
             'expander_expanded': True,
-            'current_date': datetime.now(beijing_tz).date(),
+            'current_date': plan_date,  # 计划日期
             'current_weather': "晴",
             'current_energy_level': 7,
             'current_reflection': "",
@@ -66,18 +55,25 @@ class GitHubStateManager:
             'actual_execution': [],
             'time_inputs_cache': {},
             'last_auto_save': None,
-            'state_date': today_iso,
-            'plan_source': "new"
+            'plan_date': plan_date_iso,  # 主键：计划日期
+            'plan_source': "new",
+            'created_at': datetime.now(beijing_tz).isoformat(),
+            'last_modified': datetime.now(beijing_tz).isoformat()
         }
         
         for key, value in default_states.items():
             if key not in st.session_state:
                 st.session_state[key] = value
         
-        st.sidebar.info("🆕 开始新的一天")
+        if plan_date == today:
+            st.sidebar.info("🆕 开始今天的计划")
+        elif plan_date > today:
+            st.sidebar.info(f"🆕 开始 {plan_date} 的未来计划")
+        else:
+            st.sidebar.info(f"🆕 开始 {plan_date} 的记录")
     
     def auto_save_state(self, force=False):
-        """增强的智能保存状态"""
+        """智能保存状态 - 以计划日期为主键"""
         try:
             # 检查是否是空状态
             if not force and self._is_empty_state():
@@ -110,24 +106,37 @@ class GitHubStateManager:
             # 确保状态正确性
             self._ensure_state_consistency()
             
-            today = datetime.now(beijing_tz).date().isoformat()
+            # 使用计划日期作为主键
+            plan_date = st.session_state.get('current_date')
+            if not plan_date:
+                return False
+                
+            plan_date_iso = plan_date.isoformat()
             
-            # 检查日期变化
-            if st.session_state.get('state_date') != today:
-                self._handle_date_change(today)
+            # 检查计划日期变化
+            current_plan_date = st.session_state.get('plan_date')
+            if current_plan_date != plan_date_iso:
+                self._handle_plan_date_change(plan_date_iso)
                 force = True
             
             save_data = self._prepare_save_data()
-            success = self._save_to_github(today, save_data)
+            success = self._save_to_github(plan_date_iso, save_data)
             
             if success:
                 st.session_state.last_auto_save = current_time
+                st.session_state.last_modified = current_time.isoformat()
                 self.last_save_time = current_time
                 self.last_state_hash = current_state_hash
                 
                 # 只在强制保存时显示提示，避免干扰
                 if force:
-                    st.sidebar.success("💾 状态已保存")
+                    today = datetime.now(beijing_tz).date()
+                    if plan_date == today:
+                        st.sidebar.success("💾 今日计划已保存")
+                    elif plan_date > today:
+                        st.sidebar.success(f"💾 {plan_date} 未来计划已保存")
+                    else:
+                        st.sidebar.success(f"💾 {plan_date} 记录已保存")
                     
                 return True
             
@@ -139,29 +148,44 @@ class GitHubStateManager:
     
     def _ensure_state_consistency(self):
         """确保状态一致性"""
-        today = datetime.now(beijing_tz).date().isoformat()
-        
-        # 确保状态日期正确
-        if 'state_date' not in st.session_state:
-            st.session_state.state_date = today
+        # 确保计划日期与当前日期同步
+        current_date = st.session_state.get('current_date')
+        if current_date:
+            st.session_state.plan_date = current_date.isoformat()
         
         # 确保计划来源存在
         if 'plan_source' not in st.session_state:
             st.session_state.plan_source = "new"
     
-    def _handle_date_change(self, new_date: str):
-        """处理日期变化 - 直接加载目标日期的状态"""
-        old_date = st.session_state.get('state_date')
+    def _handle_plan_date_change(self, new_plan_date: str):
+        """处理计划日期变化 - 加载新计划日期的状态"""
+        old_plan_date = st.session_state.get('plan_date')
         
-        # 更新状态日期
-        st.session_state.state_date = new_date
+        # 更新计划日期
+        st.session_state.plan_date = new_plan_date
         
-        # 直接尝试加载目标日期的状态
-        if self.load_from_github(new_date):
-            st.sidebar.success(f"✅ 已加载 {new_date} 的计划")
+        # 直接尝试加载新计划日期的状态
+        if self.load_from_github(new_plan_date):
+            new_date = datetime.fromisoformat(new_plan_date).date()
+            today = datetime.now(beijing_tz).date()
+            
+            if new_date == today:
+                st.sidebar.success("✅ 已加载今日计划")
+            elif new_date > today:
+                st.sidebar.success(f"✅ 已加载 {new_date} 的未来计划")
+            else:
+                st.sidebar.success(f"✅ 已加载 {new_date} 的记录")
         else:
-            # 如果目标日期没有保存的状态，初始化空状态
-            st.sidebar.info(f"📝 {new_date} 没有保存的计划")
+            # 如果新计划日期没有保存的状态，初始化空状态
+            new_date = datetime.fromisoformat(new_plan_date).date()
+            today = datetime.now(beijing_tz).date()
+            
+            if new_date == today:
+                st.sidebar.info("📝 今天没有保存的计划")
+            elif new_date > today:
+                st.sidebar.info(f"📝 {new_date} 没有保存的未来计划")
+            else:
+                st.sidebar.info(f"📝 {new_date} 没有保存的记录")
             
             # 清除执行数据，但保持其他设置
             st.session_state.actual_execution = []
@@ -169,23 +193,29 @@ class GitHubStateManager:
             st.session_state.current_reflection = ""
             st.session_state.tasks_saved = False
             st.session_state.show_final_confirmation = False
-            st.session_state.plan_source = "new_date"
+            st.session_state.plan_source = "date_changed"
             
-            # 如果切换到未来日期，保持计划任务；如果切换到过去，清空
-            if new_date < datetime.now(beijing_tz).date().isoformat():
+            # 如果切换到过去日期，清空计划任务
+            if new_date < today:
                 st.session_state.planned_tasks = []
                 st.session_state.tasks_confirmed = False
-    
+
     def get_state_info(self):
-        """增强的状态信息"""
-        today = datetime.now(beijing_tz).date().isoformat()
-        state_date = st.session_state.get('state_date')
-        is_today = state_date == today
+        """获取状态信息 - 基于计划日期"""
+        plan_date = st.session_state.get('current_date')
+        today = datetime.now(beijing_tz).date()
+        
+        if plan_date:
+            is_today = plan_date == today
+            plan_date_iso = plan_date.isoformat()
+        else:
+            is_today = False
+            plan_date_iso = None
         
         info = {
             'is_today': is_today,
-            'state_date': state_date,
-            'current_date': st.session_state.get('current_date'),
+            'plan_date': plan_date,
+            'plan_date_iso': plan_date_iso,
             'has_planned_tasks': len(st.session_state.get('planned_tasks', [])) > 0,
             'tasks_confirmed': st.session_state.get('tasks_confirmed', False),
             'tasks_saved': st.session_state.get('tasks_saved', False),
@@ -193,16 +223,24 @@ class GitHubStateManager:
             'last_save': st.session_state.get('last_auto_save'),
             'planned_task_count': len(st.session_state.get('planned_tasks', [])),
             'actual_execution_count': len(st.session_state.get('actual_execution', [])),
-            'plan_source': st.session_state.get('plan_source', 'unknown')
+            'plan_source': st.session_state.get('plan_source', 'unknown'),
+            'created_at': st.session_state.get('created_at'),
+            'last_modified': st.session_state.get('last_modified')
         }
         
-        # 计算日期差异
-        if state_date and info['current_date']:
-            state_date_obj = datetime.fromisoformat(state_date).date() if isinstance(state_date, str) else state_date
-            current_date_obj = info['current_date']
-            info['date_diff_days'] = (current_date_obj - state_date_obj).days
+        # 计算日期状态
+        if plan_date:
+            if plan_date == today:
+                info['date_status'] = 'today'
+            elif plan_date > today:
+                info['date_status'] = 'future'
+            else:
+                info['date_status'] = 'past'
+                
+            info['days_from_today'] = (plan_date - today).days
         else:
-            info['date_diff_days'] = 0
+            info['date_status'] = 'unknown'
+            info['days_from_today'] = 0
             
         return info
 
@@ -232,7 +270,7 @@ class GitHubStateManager:
         return True
 
     def _prepare_save_data(self):
-        """准备保存数据"""
+        """准备保存数据 - 以计划日期为主键"""
         # 处理时间对象的序列化
         serializable_time_cache = {}
         time_inputs_cache = st.session_state.get('time_inputs_cache', {})
@@ -267,12 +305,15 @@ class GitHubStateManager:
                 serializable_execution['actual_end_time'] = serializable_execution['actual_end_time'].strftime('%H:%M')
             serializable_actual_execution.append(serializable_execution)
         
+        plan_date = st.session_state.get('current_date')
+        plan_date_iso = plan_date.isoformat() if plan_date else datetime.now(beijing_tz).date().isoformat()
+        
         return {
             'tasks_confirmed': st.session_state.get('tasks_confirmed', False),
             'show_final_confirmation': st.session_state.get('show_final_confirmation', False),
             'tasks_saved': st.session_state.get('tasks_saved', False),
             'expander_expanded': st.session_state.get('expander_expanded', True),
-            'current_date': st.session_state.get('current_date', datetime.now(beijing_tz).date()).isoformat(),
+            'current_date': plan_date_iso,  # 保存计划日期
             'current_weather': st.session_state.get('current_weather', "晴"),
             'current_energy_level': st.session_state.get('current_energy_level', 7),
             'current_reflection': st.session_state.get('current_reflection', ""),
@@ -280,8 +321,11 @@ class GitHubStateManager:
             'actual_execution': serializable_actual_execution,
             'time_inputs_cache': serializable_time_cache,
             'last_auto_save': datetime.now(beijing_tz).isoformat(),
-            'state_date': st.session_state.get('state_date', datetime.now(beijing_tz).date().isoformat()),
-            'plan_source': st.session_state.get('plan_source', 'new')
+            'plan_date': plan_date_iso,  # 主键：计划日期
+            'plan_source': st.session_state.get('plan_source', 'new'),
+            'created_at': st.session_state.get('created_at', datetime.now(beijing_tz).isoformat()),
+            'last_modified': datetime.now(beijing_tz).isoformat(),
+            'saved_at': datetime.now(beijing_tz).isoformat()
         }
 
     def manual_save_state(self):
@@ -290,8 +334,6 @@ class GitHubStateManager:
 
     def _get_state_hash(self):
         """生成状态哈希值"""
-        import hashlib
-        
         state_data = {
             'planned_tasks': st.session_state.get('planned_tasks', []),
             'actual_execution': st.session_state.get('actual_execution', []),
@@ -303,7 +345,8 @@ class GitHubStateManager:
             'current_energy_level': st.session_state.get('current_energy_level', 0),
             'current_date': str(st.session_state.get('current_date', '')),
             'time_inputs_cache': st.session_state.get('time_inputs_cache', {}),
-            'plan_source': st.session_state.get('plan_source', 'new')
+            'plan_source': st.session_state.get('plan_source', 'new'),
+            'plan_date': st.session_state.get('plan_date', '')
         }
         
         # 深度处理任务数据
@@ -336,17 +379,17 @@ class GitHubStateManager:
         state_str = json.dumps(state_data, sort_keys=True, default=str)
         return hashlib.md5(state_str.encode()).hexdigest()
 
-    def load_from_github(self, date_key):
-        """从 GitHub 加载指定日期的状态"""
+    def load_from_github(self, plan_date_key):
+        """从 GitHub 加载指定计划日期的状态"""
         if not self.github_manager.is_connected():
             return False
             
         try:
             all_states = self._load_all_states_from_github()
             
-            if date_key in all_states:
-                data = all_states[date_key]
-                self._restore_from_data(data)
+            if plan_date_key in all_states:
+                data = all_states[plan_date_key]
+                self._restore_from_data(data, plan_date_key)
                 return True
                 
             return False
@@ -354,7 +397,7 @@ class GitHubStateManager:
         except Exception as e:
             return False
 
-    def _restore_from_data(self, data):
+    def _restore_from_data(self, data, plan_date_key):
         """从数据恢复状态"""
         if not data:
             return False
@@ -366,16 +409,21 @@ class GitHubStateManager:
             st.session_state.tasks_saved = data.get('tasks_saved', False)
             st.session_state.expander_expanded = data.get('expander_expanded', True)
             
-            # 恢复表单数据
+            # 恢复计划日期
             if 'current_date' in data:
                 st.session_state.current_date = datetime.fromisoformat(data['current_date']).date()
+                st.session_state.plan_date = data['current_date']  # 设置主键
             
             st.session_state.current_weather = data.get('current_weather', "晴")
             st.session_state.current_energy_level = data.get('current_energy_level', 7)
             st.session_state.current_reflection = data.get('current_reflection', "")
             
             # 恢复计划来源
-            st.session_state.plan_source = data.get('plan_source', 'new')
+            st.session_state.plan_source = data.get('plan_source', 'loaded')
+            
+            # 恢复创建和修改时间
+            st.session_state.created_at = data.get('created_at', datetime.now(beijing_tz).isoformat())
+            st.session_state.last_modified = data.get('last_modified', datetime.now(beijing_tz).isoformat())
             
             # 恢复任务数据（处理时间字符串）
             planned_tasks = data.get('planned_tasks', [])
@@ -449,9 +497,6 @@ class GitHubStateManager:
             
             st.session_state.time_inputs_cache = restored_time_cache
             
-            # 恢复状态日期
-            st.session_state.state_date = data.get('state_date', datetime.now(beijing_tz).date().isoformat())
-            
             if 'last_auto_save' in data:
                 st.session_state.last_auto_save = datetime.fromisoformat(data['last_auto_save'])
             
@@ -460,14 +505,14 @@ class GitHubStateManager:
         except Exception as e:
             return False
 
-    def _save_to_github(self, date_key, data):
-        """保存状态数据到 GitHub"""
+    def _save_to_github(self, plan_date_key, data):
+        """保存状态数据到 GitHub - 以计划日期为键"""
         if not self.github_manager.is_connected():
             return False
             
         try:
             all_states = self._load_all_states_from_github()
-            all_states[date_key] = data
+            all_states[plan_date_key] = data
             self._cleanup_old_states(all_states)
             
             content = json.dumps(all_states, ensure_ascii=False, indent=2)
@@ -482,7 +527,6 @@ class GitHubStateManager:
             return {}
             
         try:
-            # 使用新的 load_raw_content 方法
             file_content = self.github_manager.load_raw_content(self.state_key)
             if file_content:
                 return json.loads(file_content)
@@ -493,7 +537,6 @@ class GitHubStateManager:
     def _save_raw_to_github(self, content):
         """原始保存到 GitHub"""
         try:
-            # 使用新的 save_raw_content 方法
             return self.github_manager.save_raw_content(
                 self.state_key,
                 content,
@@ -503,18 +546,33 @@ class GitHubStateManager:
             return False
 
     def _cleanup_old_states(self, all_states):
-        """清理旧的状态数据（保留最近7天）"""
+        """清理旧的状态数据（保留最近30天）"""
         try:
-            sorted_dates = sorted(all_states.keys(), reverse=True)
-            if len(sorted_dates) > 7:
-                for old_date in sorted_dates[7:]:
-                    del all_states[old_date]
+            today = datetime.now(beijing_tz).date()
+            cutoff_date = today - timedelta(days=30)
+            
+            states_to_keep = {}
+            for date_key, data in all_states.items():
+                try:
+                    state_date = datetime.fromisoformat(date_key).date()
+                    if state_date >= cutoff_date:
+                        states_to_keep[date_key] = data
+                except ValueError:
+                    # 如果日期格式无效，保留该状态
+                    states_to_keep[date_key] = data
+            
+            return states_to_keep
+            
         except Exception:
-            pass
+            return all_states
 
     def clear_current_state(self):
-        """清除当前状态"""
-        today = datetime.now(beijing_tz).date().isoformat()
+        """清除当前计划日期的状态"""
+        plan_date = st.session_state.get('current_date')
+        if not plan_date:
+            return False
+            
+        plan_date_iso = plan_date.isoformat()
         
         keys_to_clear = [
             'tasks_confirmed', 'show_final_confirmation', 'tasks_saved',
@@ -531,22 +589,24 @@ class GitHubStateManager:
         st.session_state.show_final_confirmation = False
         st.session_state.tasks_saved = False
         st.session_state.expander_expanded = True
-        st.session_state.current_date = datetime.now(beijing_tz).date()
+        st.session_state.current_date = plan_date
         st.session_state.current_weather = "晴"
         st.session_state.current_energy_level = 7
         st.session_state.current_reflection = ""
         st.session_state.planned_tasks = []
         st.session_state.actual_execution = []
         st.session_state.time_inputs_cache = {}
-        st.session_state.state_date = today
-        st.session_state.plan_source = "new"
+        st.session_state.plan_date = plan_date_iso
+        st.session_state.plan_source = "cleared"
+        st.session_state.created_at = datetime.now(beijing_tz).isoformat()
+        st.session_state.last_modified = datetime.now(beijing_tz).isoformat()
         
-        # 从 GitHub 删除当天状态
+        # 从 GitHub 删除该计划日期的状态
         if self.github_manager.is_connected():
             try:
                 all_states = self._load_all_states_from_github()
-                if today in all_states:
-                    del all_states[today]
+                if plan_date_iso in all_states:
+                    del all_states[plan_date_iso]
                     content = json.dumps(all_states, ensure_ascii=False, indent=2)
                     self._save_raw_to_github(content)
             except Exception:
@@ -554,6 +614,7 @@ class GitHubStateManager:
         
         return True
 
+    # 其他方法保持不变...
     def get_data_stats(self):
         """获取数据统计信息"""
         stats = {
@@ -721,7 +782,7 @@ class GitHubStateManager:
             'expander_expanded', 'planned_tasks', 'actual_execution',
             'time_inputs_cache', 'current_reflection', 'plan_source',
             'current_date', 'current_weather', 'current_energy_level',
-            'last_auto_save', 'state_date'
+            'last_auto_save', 'plan_date', 'created_at', 'last_modified'
         ]
         
         for key in keys_to_clear:

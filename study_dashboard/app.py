@@ -115,10 +115,10 @@ def create_plan_management_sidebar():
     today = datetime.now().date()
     
     # 显示当前状态
-    if current_date == today:
+    if state_info['date_status'] == 'today':
         st.sidebar.success("📅 今天")
         st.sidebar.write(f"计划任务: {state_info['planned_task_count']}个")
-    elif current_date > today:
+    elif state_info['date_status'] == 'future':
         st.sidebar.warning(f"📅 未来计划")
         st.sidebar.write(f"日期: {current_date}")
         st.sidebar.write(f"计划任务: {state_info['planned_task_count']}个")
@@ -128,10 +128,11 @@ def create_plan_management_sidebar():
         st.sidebar.write(f"计划任务: {state_info['planned_task_count']}个")
     
     # 切换到今天的按钮
-    if current_date != today:
+    if state_info['date_status'] != 'today':
         if st.sidebar.button("🔄 切换到今天"):
-            github_state_manager._handle_date_change(today.isoformat())
-            st.session_state.current_date = today
+            today_date = datetime.now().date()
+            st.session_state.current_date = today_date
+            github_state_manager._handle_plan_date_change(today_date.isoformat())
             st.rerun()
     
     # 清除当前日期的计划（只在有计划时显示）
@@ -173,7 +174,8 @@ primary_color = "#1f77b4"
 
 def handle_page_refresh():
     """处理页面刷新，确保状态正确恢复"""
-    today = datetime.now().date().isoformat()
+    current_plan_date = st.session_state.get('current_date', datetime.now().date())
+    plan_date_iso = current_plan_date.isoformat()
     
     # 如果关键状态不存在，尝试从 GitHub 恢复
     critical_states = ['planned_tasks', 'tasks_confirmed', 'current_date']
@@ -181,11 +183,16 @@ def handle_page_refresh():
     
     if states_missing:
         st.sidebar.info("🔄 检测到页面刷新，恢复状态中...")
-        if github_state_manager.load_from_github(today):
-            st.sidebar.success("✅ 状态恢复成功")
+        if github_state_manager.load_from_github(plan_date_iso):
+            st.sidebar.success(f"✅ {current_plan_date} 状态恢复成功")
             st.rerun()
         else:
-            st.sidebar.info("📝 开始新的学习记录")
+            if current_plan_date == datetime.now().date():
+                st.sidebar.info("📝 开始新的学习记录")
+            elif current_plan_date > datetime.now().date():
+                st.sidebar.info(f"📝 开始 {current_plan_date} 的未来计划")
+            else:
+                st.sidebar.info(f"📝 开始 {current_plan_date} 的记录")
 
 # 调用刷新处理
 handle_page_refresh()
@@ -193,17 +200,23 @@ handle_page_refresh()
 github_state_manager.init_session_state()
 
 def check_and_restore_state():
-    """检查并恢复状态"""
-    today = datetime.now().date().isoformat()
+    """检查并恢复状态 - 基于计划日期"""
+    current_plan_date = st.session_state.get('current_date', datetime.now().date())
+    plan_date_iso = current_plan_date.isoformat()
     
     # 如果 session_state 中没有数据，尝试从 GitHub 恢复
     if not st.session_state.get('planned_tasks') and not st.session_state.get('tasks_confirmed'):
         st.sidebar.info("🔄 正在尝试恢复状态...")
-        if github_state_manager.load_from_github(today):
-            st.sidebar.success("✅ 状态恢复成功！")
+        if github_state_manager.load_from_github(plan_date_iso):
+            st.sidebar.success(f"✅ {current_plan_date} 的状态恢复成功！")
             st.rerun()  # 重新渲染页面以显示恢复的数据
         else:
-            st.sidebar.info("🆕 开始新的一天")
+            if current_plan_date == datetime.now().date():
+                st.sidebar.info("🆕 开始新的一天")
+            elif current_plan_date > datetime.now().date():
+                st.sidebar.info(f"🆕 开始 {current_plan_date} 的未来计划")
+            else:
+                st.sidebar.info(f"🆕 开始 {current_plan_date} 的记录")
 
 # 调用状态恢复检查
 check_and_restore_state()
@@ -221,7 +234,12 @@ def create_state_sidebar():
     
     col1, col2 = st.sidebar.columns(2)
     with col1:
-        status = "✅ 今天" if state_info['is_today'] else "⚠️ 过往"
+        if state_info['date_status'] == 'today':
+            status = "✅ 今天"
+        elif state_info['date_status'] == 'future':
+            status = "🔮 未来"
+        else:
+            status = "📚 过往"
         st.metric("状态", status)
     with col2:
         st.metric("任务", state_info['planned_task_count'])
@@ -231,8 +249,9 @@ def create_state_sidebar():
     
     # 手动恢复按钮
     if st.sidebar.button("🔄 恢复状态"):
-        today = datetime.now().date().isoformat()
-        if github_state_manager.load_from_github(today):
+        current_plan_date = st.session_state.get('current_date', datetime.now().date())
+        plan_date_iso = current_plan_date.isoformat()
+        if github_state_manager.load_from_github(plan_date_iso):
             st.sidebar.success("状态恢复成功!")
             st.rerun()
         else:
@@ -246,44 +265,47 @@ def create_state_sidebar():
             st.sidebar.error("手动保存失败!")
     
     # 状态日期提醒
-    if not state_info['is_today']:
+    if state_info['date_status'] != 'today':
         current_date = st.session_state.get('current_date')
         if current_date:
-            if current_date > datetime.now().date():
-                st.sidebar.warning(f"📅 未来计划: {state_info['state_date']}")
+            if state_info['date_status'] == 'future':
+                st.sidebar.warning(f"📅 未来计划: {current_date}")
             else:
-                st.sidebar.info(f"📅 过往记录: {state_info['state_date']}")
+                st.sidebar.info(f"📅 过往记录: {current_date}")
         
         if st.sidebar.button("🆕 切换到今天"):
-            github_state_manager._handle_date_change(datetime.now().date().isoformat())
-            st.session_state.current_date = datetime.now().date()
+            today_date = datetime.now().date()
+            st.session_state.current_date = today_date
+            github_state_manager._handle_plan_date_change(today_date.isoformat())
             st.rerun()
     
     # 在侧边栏底部添加调试信息
     with st.sidebar.expander("🔧 调试信息"):
         state_info = github_state_manager.get_state_info()
         st.write("GitHub 连接:", "✅ 已连接" if state_info['github_connected'] else "❌ 未连接")
-        st.write("状态日期:", state_info['current_date'])
+        st.write("计划日期:", state_info['plan_date'])
         st.write("计划任务数:", state_info['planned_task_count'])
         st.write("任务确认:", state_info['tasks_confirmed'])
-        st.write("今日状态:", state_info['is_today'])
+        st.write("日期状态:", state_info['date_status'])
+        st.write("距今天数:", state_info['days_from_today'])
         st.write("空状态检查:", "✅ 是" if github_state_manager._is_empty_state() else "❌ 否")
         
         # 显示保存的状态文件内容（调试用）
         if st.button("查看GitHub保存的状态"):
-            today = datetime.now().date().isoformat()
+            current_plan_date = st.session_state.get('current_date', datetime.now().date())
+            plan_date_iso = current_plan_date.isoformat()
             all_states = github_state_manager._load_all_states_from_github()
-            if today in all_states:
-                st.json(all_states[today])
+            if plan_date_iso in all_states:
+                st.json(all_states[plan_date_iso])
                 # 显示状态哈希对比
                 current_hash = github_state_manager._get_state_hash()
-                saved_data = all_states[today]
+                saved_data = all_states[plan_date_iso]
                 saved_hash = hashlib.md5(json.dumps(saved_data, sort_keys=True).encode()).hexdigest()
                 st.write("当前状态哈希:", current_hash[:8])
                 st.write("保存状态哈希:", saved_hash[:8])
                 st.write("状态一致:", current_hash == saved_hash)
             else:
-                st.info("今天没有保存的状态")
+                st.info(f"{plan_date_iso} 没有保存的状态")
 
 # 在页面中调用
 create_state_sidebar()
@@ -334,17 +356,20 @@ if page == "今日记录":
     current_date = st.session_state.get('current_date', datetime.now().date())
     today = datetime.now().date()
     
-    if current_date == today:
+    state_info = github_state_manager.get_state_info()
+    
+    if state_info['date_status'] == 'today':
         st.markdown(f"##### 📝 今日学习记录")
-    elif current_date > today:
+    elif state_info['date_status'] == 'future':
         st.markdown(f"##### 📝 {current_date} 未来计划")
     else:
         st.markdown(f"##### 📝 {current_date} 学习记录")
 
     with st.form("daily_record"):
         # === 基本信息区域 - 响应式3列布局 ===
+        # === 基本信息区域 - 响应式3列布局 ===
         st.markdown(f"###### 📅 基本信息")
-        
+
         info_cols = st.columns(3)
         with info_cols[0]:
             with st.empty().container():
@@ -352,6 +377,8 @@ if page == "今日记录":
             
             if selected_date != current_date:
                 st.session_state.current_date = selected_date
+                # 触发计划日期变更处理
+                github_state_manager._handle_plan_date_change(selected_date.isoformat())
                 st.rerun()
 
             # 显示日期状态
@@ -807,9 +834,10 @@ if page == "今日记录":
                         
                         if success:
                             st.balloons()
-                            if current_date == today:
+                            state_info = github_state_manager.get_state_info()
+                            if state_info['date_status'] == 'today':
                                 st.success("🎉 今日记录保存成功！")
-                            elif current_date > today:
+                            elif state_info['date_status'] == 'future':
                                 st.success(f"🎉 {current_date} 的未来计划保存成功！")
                             else:
                                 st.success(f"🎉 {current_date} 的记录保存成功！")
