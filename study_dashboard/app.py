@@ -354,6 +354,7 @@ if page == "今日记录":
             
             if selected_date != current_date:
                 st.session_state.current_date = selected_date
+                st.rerun()
 
             # 显示日期状态
             if selected_date == today:
