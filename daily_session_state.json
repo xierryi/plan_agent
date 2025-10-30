@@ -71,9 +71,9 @@
     "show_final_confirmation": false,
     "tasks_saved": false,
     "expander_expanded": true,
-    "current_date": "2025-10-24",
+    "current_date": "2025-10-29",
     "current_weather": "晴",
-    "current_energy_level": 7,
+    "current_energy_level": 6,
     "current_reflection": "",
     "planned_tasks": [
       {
@@ -94,7 +94,7 @@
       "start_1": "09:00:00",
       "end_1": "10:00:00"
     },
-    "last_auto_save": "2025-10-30T15:43:09.565603+08:00",
+    "last_auto_save": "2025-10-30T15:53:38.783503+08:00",
     "state_date": "2025-10-30",
     "plan_source": "new"
   }
