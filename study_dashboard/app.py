@@ -347,15 +347,18 @@ if page == "今日记录":
         
         info_cols = st.columns(3)
         with info_cols[0]:
-            current_date_value = st.session_state.get('current_date', datetime.now().date())
-            current_date = st.date_input("日期", value=current_date_value, key="date_input")
+            selected_date = st.date_input("日期", value=current_date, key="date_input")
             
+            if selected_date != current_date:
+                st.session_state.current_date = selected_date
+
             # 显示日期状态
-            today = datetime.now().date()
-            if current_date == today:
+            if selected_date == today:
                 st.success("📅 今天")
-            elif current_date > today:
+            elif selected_date > today:
                 st.warning("📅 未来计划")
+            else:
+                st.info("📅 过往记录")
                 
         with info_cols[1]:
             current_weather_value = st.session_state.get('current_weather', "晴")
