@@ -421,12 +421,13 @@ if page == "今日记录":
                 saved_task = st.session_state.get('planned_tasks', [])[i] if i < len(st.session_state.get('planned_tasks', [])) else {}
                 
                 # 任务名称 - 单独一行
-                task_name = st.text_input(
-                    "任务名称", 
-                    value=saved_task.get('task_name', ''),
-                    key=f"task_name_{i}",
-                    placeholder="输入任务名称"
-                )
+                with st.empty().container():
+                    task_name = st.text_input(
+                        "任务名称", 
+                        value=saved_task.get('task_name', ''),
+                        key=f"task_name_{i}",
+                        placeholder="输入任务名称"
+                    )
                 
                 # 学科和难度 - 2列布局
                 col1, col2 = st.columns(2)
