@@ -365,7 +365,8 @@ if page == "今日记录":
 
         info_cols = st.columns(4)
         with info_cols[0]:
-            with st.empty().container():
+            date_placeholder = st.empty()
+            with date_placeholder.container():
                 selected_date = st.date_input("日期", value=current_date, key="date_input")
 
             # 显示日期状态
@@ -458,7 +459,8 @@ if page == "今日记录":
                     saved_task = st.session_state.planned_tasks[i]
                 
                 # 任务名称
-                with st.empty().container():
+                task_placeholder = st.empty()
+                with task_placeholder.container():
                     task_name = st.text_input(
                         "任务名称", 
                         value=saved_task.get('task_name', ''),
