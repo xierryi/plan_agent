@@ -5,7 +5,7 @@ try:
     import plotly.graph_objects as go
     from datetime import datetime, timedelta, time
     import json
-    import time
+    import time as time_module
     import numpy as np
     from data_manager import StudyDataManager
     from study_agent import StudyAgent
@@ -435,8 +435,8 @@ if page == "今日记录":
                             'task_name': '',
                             'subject': 'math',
                             'difficulty': 3,
-                            'planned_start_time': datetime.time(start_hour, start_minute),
-                            'planned_end_time': datetime.time(start_hour + 1, start_minute),
+                            'planned_start_time': time(start_hour, start_minute),
+                            'planned_end_time': time(start_hour + 1, start_minute),
                             'planned_duration': 60,
                             'planned_focus_duration': 48
                         }
@@ -725,7 +725,7 @@ if page == "今日记录":
                     if actual_end_time <= actual_start_time:
                         st.error("❌ 实际结束时间必须在实际开始时间之后")
                         github_state_manager.auto_save_state(force=False)
-                        time.sleep(0.1)
+                        time_module.sleep(0.1)
                         st.rerun()
 
                 # 精力水平和时长显示 - 2列布局
