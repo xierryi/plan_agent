@@ -46,7 +46,7 @@
     "planned_tasks": [
       {
         "task_id": 1,
-        "task_name": "10-31",
+        "task_name": "10-30",
         "subject": "econ",
         "planned_duration": 60,
         "planned_focus_duration": 48,
@@ -72,12 +72,12 @@
       "start_1": "10:25:00",
       "end_1": "11:35:00"
     },
-    "last_auto_save": "2025-10-31T10:03:44.596631+08:00",
+    "last_auto_save": "2025-10-31T10:04:25.851797+08:00",
     "plan_date": "2025-10-30",
     "plan_source": "date_changed",
     "created_at": "2025-10-31T09:32:46.685437+08:00",
-    "last_modified": "2025-10-31T10:03:44.596680+08:00",
-    "saved_at": "2025-10-31T10:03:44.596686+08:00"
+    "last_modified": "2025-10-31T10:04:25.851823+08:00",
+    "saved_at": "2025-10-31T10:04:25.851827+08:00"
   },
   "2025-10-31": {
     "tasks_confirmed": true,
