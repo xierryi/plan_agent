@@ -352,7 +352,7 @@ st.markdown("""
 
 # 页面1: 今日记录
 if page == "今日记录":
-    current_date = st.session_state.get('current_date', datetime.now().date())
+    current_date = st.session_state.get('current_date')
     today = datetime.now().date()
     
     state_info = github_state_manager.get_state_info()
@@ -418,8 +418,8 @@ if page == "今日记录":
                 st.markdown(f"###### 任务 {i+1}")
                 
                 # 从保存的数据中获取默认值
-                saved_task = st.session_state.get('planned_tasks', [])[i] if i < len(st.session_state.get('planned_tasks', [])) else {}
-                
+                # saved_task = st.session_state.get('planned_tasks', [])[i] if i < len(st.session_state.get('planned_tasks', [])) else {}
+                saved_task = st.session_state.get('planned_tasks')[i] 
                 # 任务名称 - 单独一行
                 with st.empty().container():
                     task_name = st.text_input(
