@@ -167,7 +167,7 @@ class GitHubStateManager:
         # 直接尝试加载新计划日期的状态
         if self.load_from_github(new_plan_date):
             new_date = datetime.fromisoformat(new_plan_date).date()
-            today = datetime.now(beijing_tz).date()
+            today = datetime.now().date()  # 移除时区，使用本地时间
             
             if new_date == today:
                 st.sidebar.success("✅ 已加载今日计划")
@@ -175,10 +175,16 @@ class GitHubStateManager:
                 st.sidebar.success(f"✅ 已加载 {new_date} 的未来计划")
             else:
                 st.sidebar.success(f"✅ 已加载 {new_date} 的记录")
+                
+            # 确保任务数据已正确恢复
+            planned_tasks = st.session_state.get('planned_tasks', [])
+            if planned_tasks:
+                st.sidebar.info(f"📋 已恢复 {len(planned_tasks)} 个任务")
+                
         else:
             # 如果新计划日期没有保存的状态，初始化空状态
             new_date = datetime.fromisoformat(new_plan_date).date()
-            today = datetime.now(beijing_tz).date()
+            today = datetime.now().date()  # 移除时区，使用本地时间
             
             if new_date == today:
                 st.sidebar.info("📝 今天没有保存的计划")
@@ -187,18 +193,37 @@ class GitHubStateManager:
             else:
                 st.sidebar.info(f"📝 {new_date} 没有保存的记录")
             
-            # 清除执行数据，但保持其他设置
+            # 初始化空状态
+            st.session_state.planned_tasks = []
+            st.session_state.tasks_confirmed = False
             st.session_state.actual_execution = []
             st.session_state.time_inputs_cache = {}
             st.session_state.current_reflection = ""
             st.session_state.tasks_saved = False
             st.session_state.show_final_confirmation = False
+            st.session_state.expander_expanded = True  # 确保展开器默认展开
             st.session_state.plan_source = "date_changed"
             
-            # 如果切换到过去日期，清空计划任务
-            if new_date < today:
-                st.session_state.planned_tasks = []
-                st.session_state.tasks_confirmed = False
+            # 如果是未来日期，初始化一些默认任务
+            if new_date >= today:
+                # 为未来日期创建2个默认任务
+                default_tasks = []
+                for i in range(2):
+                    default_tasks.append({
+                        'task_id': i + 1,
+                        'task_name': '',
+                        'subject': 'math',
+                        'difficulty': 3,
+                        'planned_start_time': time(9 + i, 0),  # 9:00, 10:00
+                        'planned_end_time': time(10 + i, 0),   # 10:00, 11:00
+                        'planned_duration': 60,
+                        'planned_focus_duration': 48
+                    })
+                st.session_state.planned_tasks = default_tasks
+                st.sidebar.info("🆕 已初始化新计划表单")
+            else:
+                # 过去日期保持空状态
+                st.sidebar.info("📝 过去日期保持空状态")
 
     def get_state_info(self):
         """获取状态信息 - 基于计划日期"""

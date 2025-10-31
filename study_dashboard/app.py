@@ -208,14 +208,9 @@ def check_and_restore_state():
         st.sidebar.info("🔄 正在尝试恢复状态...")
         if github_state_manager.load_from_github(plan_date_iso):
             st.sidebar.success(f"✅ {current_plan_date} 的状态恢复成功！")
-            st.rerun()  # 重新渲染页面以显示恢复的数据
         else:
-            if current_plan_date == datetime.now().date():
-                st.sidebar.info("🆕 开始新的一天")
-            elif current_plan_date > datetime.now().date():
-                st.sidebar.info(f"🆕 开始 {current_plan_date} 的未来计划")
-            else:
-                st.sidebar.info(f"🆕 开始 {current_plan_date} 的记录")
+            # 调用日期变更处理来初始化状态
+            github_state_manager._handle_plan_date_change(plan_date_iso)
 
 # 调用状态恢复检查
 check_and_restore_state()
@@ -386,7 +381,9 @@ if page == "今日记录":
             date_change_button = st.form_submit_button("📅 切换日期")
             if date_change_button:
                 if selected_date != current_date:
+                    # 更新当前日期
                     st.session_state.current_date = selected_date
+                    # 调用日期变更处理
                     github_state_manager._handle_plan_date_change(selected_date.isoformat())
                     st.rerun()
                 
@@ -411,16 +408,56 @@ if page == "今日记录":
 
         with st.expander("添加计划任务", expanded=st.session_state.get('expander_expanded', True)):
             # 动态调整任务数量
-            current_task_count = max(2, len(st.session_state.get('planned_tasks', [])))
+            current_task_count = len(st.session_state.get('planned_tasks', []))
+            if current_task_count == 0:
+                current_task_count = 2  # 默认值
+
             task_count = st.number_input("任务数量", min_value=1, max_value=8, value=current_task_count)
+
+            # 如果任务数量变化，调整 planned_tasks 数组
+            planned_tasks = st.session_state.get('planned_tasks', [])
+            if task_count != len(planned_tasks):
+                if task_count > len(planned_tasks):
+                    # 添加新任务
+                    for i in range(len(planned_tasks), task_count):
+                        # 计算默认时间（基于最后一个任务）
+                        last_task = planned_tasks[-1] if planned_tasks else None
+                        if last_task and 'planned_end_time' in last_task:
+                            last_end_time = parse_time(last_task['planned_end_time'])
+                            start_hour = last_end_time.hour
+                            start_minute = last_end_time.minute
+                        else:
+                            start_hour = 9 + i
+                            start_minute = 0
+                        
+                        new_task = {
+                            'task_id': i + 1,
+                            'task_name': '',
+                            'subject': 'math',
+                            'difficulty': 3,
+                            'planned_start_time': time(start_hour, start_minute),
+                            'planned_end_time': time(start_hour + 1, start_minute),
+                            'planned_duration': 60,
+                            'planned_focus_duration': 48
+                        }
+                        planned_tasks.append(new_task)
+                else:
+                    # 删除多余任务
+                    planned_tasks = planned_tasks[:task_count]
+                
+                st.session_state.planned_tasks = planned_tasks
+                github_state_manager.auto_save_state()
+                st.rerun()
             
             for i in range(task_count):
                 st.markdown(f"###### 任务 {i+1}")
                 
-                # 从保存的数据中获取默认值
-                # saved_task = st.session_state.get('planned_tasks', [])[i] if i < len(st.session_state.get('planned_tasks', [])) else {}
-                saved_task = st.session_state.get('planned_tasks')[i] 
-                # 任务名称 - 单独一行
+                # 从当前日期的缓存数据中获取默认值
+                saved_task = {}
+                if i < len(st.session_state.get('planned_tasks', [])):
+                    saved_task = st.session_state.planned_tasks[i]
+                
+                # 任务名称
                 with st.empty().container():
                     task_name = st.text_input(
                         "任务名称", 
@@ -429,7 +466,7 @@ if page == "今日记录":
                         placeholder="输入任务名称"
                     )
                 
-                # 学科和难度 - 2列布局
+                # 学科和难度
                 col1, col2 = st.columns(2)
                 with col1:
                     subject_options = ["math", "physics", "econ", "cs", "other"]
@@ -454,54 +491,33 @@ if page == "今日记录":
                         key=f"difficulty_{i}"
                     )
                 
-                # 时间设置 - 2列布局
+                # 时间设置
                 time_cols = st.columns(2)
                 with time_cols[0]:
-                    # 从缓存或保存数据获取开始时间
-                    start_cache_key = f"start_{i}"
-                    time_inputs_cache = st.session_state.get('time_inputs_cache', {})
-                    if start_cache_key in time_inputs_cache:
-                        default_start = time_inputs_cache[start_cache_key]
-                    elif 'planned_start_time' in saved_task:
-                        default_start = parse_time(saved_task['planned_start_time'])
-                    else:
-                        default_start = datetime.now().time().replace(hour=9, minute=0)
+                    # 从当前日期缓存获取开始时间
+                    start_time_value = saved_task.get('planned_start_time', datetime.now().time().replace(hour=9, minute=0))
+                    if isinstance(start_time_value, str):
+                        start_time_value = parse_time(start_time_value)
                     
                     start_time = st.time_input(
                         "开始时间", 
-                        value=default_start,
+                        value=start_time_value,
                         key=f"start_{i}",
                         step=300
                     )
-                    # 缓存时间值
-                    st.session_state.time_inputs_cache = st.session_state.get('time_inputs_cache', {})
-                    st.session_state.time_inputs_cache[start_cache_key] = start_time
                 
                 with time_cols[1]:
-                    # 从缓存或保存数据获取结束时间
-                    end_cache_key = f"end_{i}"
-                    time_inputs_cache = st.session_state.get('time_inputs_cache', {})
-                    if end_cache_key in time_inputs_cache:
-                        default_end = time_inputs_cache[end_cache_key]
-                    elif 'planned_end_time' in saved_task:
-                        default_end = parse_time(saved_task['planned_end_time'])
-                    else:
-                        default_end = datetime.now().time().replace(hour=10, minute=0)
+                    # 从当前日期缓存获取结束时间
+                    end_time_value = saved_task.get('planned_end_time', datetime.now().time().replace(hour=10, minute=0))
+                    if isinstance(end_time_value, str):
+                        end_time_value = parse_time(end_time_value)
                     
                     end_time = st.time_input(
                         "结束时间", 
-                        value=default_end,
+                        value=end_time_value,
                         key=f"end_{i}",
                         step=300
                     )
-                    st.session_state.time_inputs_cache = st.session_state.get('time_inputs_cache', {})
-                    st.session_state.time_inputs_cache[end_cache_key] = end_time
-                    
-                    if end_time <= start_time:
-                        st.error("❌ 结束时间必须在开始时间之后")
-                        github_state_manager.auto_save_state(False)
-                        time.sleep(0.1)
-                        st.rerun()
 
                 # 显示时长
                 start_dt = datetime.combine(current_date, start_time)
