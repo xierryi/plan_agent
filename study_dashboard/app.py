@@ -435,8 +435,8 @@ if page == "今日记录":
                             'task_name': '',
                             'subject': 'math',
                             'difficulty': 3,
-                            'planned_start_time': time(start_hour, start_minute),
-                            'planned_end_time': time(start_hour + 1, start_minute),
+                            'planned_start_time': datetime.time(start_hour, start_minute),
+                            'planned_end_time': datetime.time(start_hour + 1, start_minute),
                             'planned_duration': 60,
                             'planned_focus_duration': 48
                         }
