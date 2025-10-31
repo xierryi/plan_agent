@@ -142,11 +142,91 @@
       "actual_end_1": "12:50:00",
       "energy_1": 7
     },
-    "last_auto_save": "2025-10-31T11:22:11.369340+08:00",
+    "last_auto_save": "2025-10-31T11:47:36.437887+08:00",
     "plan_date": "2025-10-31",
     "plan_source": "date_changed",
     "created_at": "2025-10-31T09:32:46.685437+08:00",
-    "last_modified": "2025-10-31T11:22:11.369377+08:00",
-    "saved_at": "2025-10-31T11:22:11.369384+08:00"
+    "last_modified": "2025-10-31T11:47:36.437916+08:00",
+    "saved_at": "2025-10-31T11:47:36.437922+08:00"
+  },
+  "2025-10-24": {
+    "tasks_confirmed": false,
+    "show_final_confirmation": false,
+    "tasks_saved": false,
+    "expander_expanded": true,
+    "current_date": "2025-10-24",
+    "current_weather": "晴",
+    "current_energy_level": 7,
+    "current_reflection": "",
+    "planned_tasks": [
+      {
+        "task_id": 1,
+        "task_name": "10-30",
+        "subject": "econ",
+        "planned_duration": 60,
+        "planned_focus_duration": 48,
+        "difficulty": 3,
+        "planned_start_time": "09:00",
+        "planned_end_time": "10:00"
+      },
+      {
+        "task_id": 2,
+        "task_name": "",
+        "subject": "math",
+        "difficulty": 3,
+        "planned_start_time": "10:00",
+        "planned_end_time": "11:00",
+        "planned_duration": 60,
+        "planned_focus_duration": 48
+      }
+    ],
+    "actual_execution": [],
+    "time_inputs_cache": {},
+    "last_auto_save": "2025-10-31T11:27:14.359075+08:00",
+    "plan_date": "2025-10-24",
+    "plan_source": "date_changed",
+    "created_at": "2025-10-31T09:32:46.685437+08:00",
+    "last_modified": "2025-10-31T11:27:14.359109+08:00",
+    "saved_at": "2025-10-31T11:27:14.359115+08:00"
+  },
+  "2025-11-01": {
+    "tasks_confirmed": false,
+    "show_final_confirmation": false,
+    "tasks_saved": false,
+    "expander_expanded": true,
+    "current_date": "2025-11-01",
+    "current_weather": "晴",
+    "current_energy_level": 7,
+    "current_reflection": "",
+    "planned_tasks": [
+      {
+        "task_id": 1,
+        "task_name": "111",
+        "subject": "econ",
+        "planned_duration": 60,
+        "planned_focus_duration": 48,
+        "difficulty": 3,
+        "planned_start_time": "09:00",
+        "planned_end_time": "10:00"
+      },
+      {
+        "task_id": 2,
+        "task_name": "12",
+        "subject": "math",
+        "planned_duration": 70,
+        "planned_focus_duration": 56,
+        "difficulty": 3,
+        "planned_start_time": "10:25",
+        "planned_end_time": "11:35"
+      }
+    ],
+    "actual_execution": [],
+    "time_inputs_cache": {},
+    "last_auto_save": "2025-10-31T11:46:33.475256+08:00",
+    "plan_date": "2025-11-01",
+    "plan_source": "date_changed",
+    "created_at": "2025-10-31T09:32:46.685437+08:00",
+    "last_modified": "2025-10-31T11:46:33.475287+08:00",
+    "saved_at": "2025-10-31T11:46:33.475293+08:00"
   }
 }
