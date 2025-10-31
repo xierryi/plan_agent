@@ -383,7 +383,7 @@ if page == "今日记录":
 
         with info_cols[1]:
             st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)  # 垂直对齐调整
-            date_change_button = st.button("📅 切换日期")
+            date_change_button = st.form_submit_button("📅 切换日期")
             if date_change_button:
                 if selected_date != current_date:
                     st.session_state.current_date = selected_date
