@@ -33,5 +33,40 @@
     "created_at": "2025-10-31T09:32:46.685437+08:00",
     "last_modified": "2025-10-31T09:33:40.668334+08:00",
     "saved_at": "2025-10-31T09:33:40.668338+08:00"
+  },
+  "2025-10-30": {
+    "tasks_confirmed": false,
+    "show_final_confirmation": false,
+    "tasks_saved": false,
+    "expander_expanded": false,
+    "current_date": "2025-10-30",
+    "current_weather": "晴",
+    "current_energy_level": 7,
+    "current_reflection": "",
+    "planned_tasks": [
+      {
+        "task_id": 1,
+        "task_name": "10-30",
+        "subject": "econ",
+        "planned_duration": 60,
+        "planned_focus_duration": 48,
+        "difficulty": 3,
+        "planned_start_time": "09:00",
+        "planned_end_time": "10:00"
+      }
+    ],
+    "actual_execution": [],
+    "time_inputs_cache": {
+      "start_0": "09:00:00",
+      "end_0": "10:00:00",
+      "start_1": "09:00:13",
+      "end_1": "10:00:13"
+    },
+    "last_auto_save": "2025-10-31T09:34:28.757875+08:00",
+    "plan_date": "2025-10-30",
+    "plan_source": "date_changed",
+    "created_at": "2025-10-31T09:32:46.685437+08:00",
+    "last_modified": "2025-10-31T09:34:28.757898+08:00",
+    "saved_at": "2025-10-31T09:34:28.757902+08:00"
   }
 }
