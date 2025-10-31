@@ -368,16 +368,10 @@ if page == "今日记录":
         # === 基本信息区域 - 响应式3列布局 ===
         st.markdown(f"###### 📅 基本信息")
 
-        info_cols = st.columns(3)
+        info_cols = st.columns(4)
         with info_cols[0]:
             with st.empty().container():
                 selected_date = st.date_input("日期", value=current_date, key="date_input")
-            
-            if selected_date != current_date:
-                st.session_state.current_date = selected_date
-                # 触发计划日期变更处理
-                github_state_manager._handle_plan_date_change(selected_date.isoformat())
-                st.rerun()
 
             # 显示日期状态
             if selected_date == today:
@@ -386,8 +380,17 @@ if page == "今日记录":
                 st.warning("📅 未来计划")
             else:
                 st.info("📅 过往记录")
-                
+
         with info_cols[1]:
+            st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)  # 垂直对齐调整
+            date_change_button = st.button("📅 切换日期")
+            if date_change_button:
+                if selected_date != current_date:
+                    st.session_state.current_date = selected_date
+                    github_state_manager._handle_plan_date_change(selected_date.isoformat())
+                    st.rerun()
+                
+        with info_cols[2]:
             current_weather_value = st.session_state.get('current_weather', "晴")
             weather_options = ["晴", "多云", "雨", "阴", "雪"]
             current_weather_index = weather_options.index(current_weather_value) if current_weather_value in weather_options else 0
@@ -396,7 +399,7 @@ if page == "今日记录":
             if current_weather != st.session_state.get('current_weather'):
                 st.session_state.current_weather = current_weather
                 
-        with info_cols[2]:
+        with info_cols[3]:
             current_energy_level_value = st.session_state.get('current_energy_level', 7)
             current_energy_level = st.slider("精力水平", 1, 10, value=current_energy_level_value, key="energy_input")
             if current_energy_level != st.session_state.get('current_energy_level'):
