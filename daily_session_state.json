@@ -72,7 +72,7 @@
       {
         "task_id": 1,
         "task_name": "ai+核磁共振演示动画",
-        "subject": "math",
+        "subject": "cs",
         "planned_duration": 60,
         "planned_focus_duration": 48,
         "difficulty": 3,
@@ -81,22 +81,22 @@
       },
       {
         "task_id": 2,
-        "task_name": "",
+        "task_name": "实分析",
         "subject": "math",
+        "planned_duration": 60,
+        "planned_focus_duration": 48,
         "difficulty": 3,
         "planned_start_time": "10:00",
-        "planned_end_time": "11:00",
-        "planned_duration": 60,
-        "planned_focus_duration": 48
+        "planned_end_time": "11:00"
       }
     ],
     "actual_execution": [],
     "time_inputs_cache": {},
-    "last_auto_save": "2025-11-07T17:06:08.643512+08:00",
+    "last_auto_save": "2025-11-07T17:06:39.646634+08:00",
     "plan_date": "2025-11-08",
     "plan_source": "date_changed",
     "created_at": "2025-11-07T16:58:26.394020+08:00",
-    "last_modified": "2025-11-07T17:06:08.643539+08:00",
-    "saved_at": "2025-11-07T17:06:08.643544+08:00"
+    "last_modified": "2025-11-07T17:06:39.646662+08:00",
+    "saved_at": "2025-11-07T17:06:39.646667+08:00"
   }
 }
