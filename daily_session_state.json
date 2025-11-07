@@ -268,5 +268,45 @@
     "created_at": "2025-11-07T11:31:32.023622+08:00",
     "last_modified": "2025-11-07T11:32:56.546820+08:00",
     "saved_at": "2025-11-07T11:32:56.546828+08:00"
+  },
+  "2025-11-16": {
+    "tasks_confirmed": false,
+    "show_final_confirmation": false,
+    "tasks_saved": false,
+    "expander_expanded": true,
+    "current_date": "2025-11-16",
+    "current_weather": "晴",
+    "current_energy_level": 7,
+    "current_reflection": "",
+    "planned_tasks": [
+      {
+        "task_id": 1,
+        "task_name": "1116",
+        "subject": "math",
+        "planned_duration": 60,
+        "planned_focus_duration": 48,
+        "difficulty": 3,
+        "planned_start_time": "09:00",
+        "planned_end_time": "10:00"
+      },
+      {
+        "task_id": 2,
+        "task_name": "",
+        "subject": "math",
+        "difficulty": 3,
+        "planned_start_time": "10:00",
+        "planned_end_time": "11:00",
+        "planned_duration": 60,
+        "planned_focus_duration": 48
+      }
+    ],
+    "actual_execution": [],
+    "time_inputs_cache": {},
+    "last_auto_save": "2025-11-07T11:56:25.296316+08:00",
+    "plan_date": "2025-11-16",
+    "plan_source": "date_changed",
+    "created_at": "2025-11-07T11:31:32.023622+08:00",
+    "last_modified": "2025-11-07T11:56:25.296341+08:00",
+    "saved_at": "2025-11-07T11:56:25.296347+08:00"
   }
 }
