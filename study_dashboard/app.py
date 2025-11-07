@@ -167,6 +167,43 @@ def update_task_data_in_realtime(i, current_date):
         # 智能保存
         github_state_manager.auto_save_state()
 
+def update_actual_execution_data(i, task, current_date):
+    """更新实际执行数据"""
+    actual_start_time = st.session_state.get(f"actual_start_{i}")
+    actual_end_time = st.session_state.get(f"actual_end_{i}")
+    task_energy = st.session_state.get(f"energy_input_{i}", 7)
+    
+    # 验证时间
+    if actual_end_time <= actual_start_time:
+        return False  # 时间无效，不保存
+    
+    # 计算时长
+    start_dt = datetime.combine(current_date, actual_start_time)
+    end_dt = datetime.combine(current_date, actual_end_time)
+    actual_duration = calculate_duration(start_dt, end_dt)
+    
+    actual_data = {
+        "task_id": task['task_id'],
+        "actual_start_time": actual_start_time,
+        "actual_end_time": actual_end_time,
+        "actual_duration": actual_duration,
+        "actual_focus_duration": int(actual_duration * 0.8),
+        "post_energy": task_energy,
+        "completed": True
+    }
+    
+    # 更新实际执行数据
+    actual_execution = st.session_state.get('actual_execution', [])
+    if i < len(actual_execution):
+        actual_execution[i] = actual_data
+    else:
+        actual_execution.append(actual_data)
+    st.session_state.actual_execution = actual_execution
+    
+    # 智能保存
+    github_state_manager.auto_save_state()
+    return True
+
 def parse_time(time_value):
     """通用时间解析函数"""
     try:
@@ -821,21 +858,23 @@ if page == "今日记录":
             # 时间输入 - 2列布局
             time_cols = st.columns(2)
             with time_cols[0]:
-                # 从 session_state 获取实际开始时间
+                # 从 session_state 获取实际开始时间 - 添加回调
                 actual_start_time = st.time_input(
                     "实际开始时间",
                     value=st.session_state.get(f"actual_start_{i}", parse_time(saved_actual.get('actual_start_time', task['planned_start_time']))),
                     key=f"actual_start_{i}",
-                    step=300
+                    step=300,
+                    on_change=lambda i=i, task=task: update_actual_execution_data(i, task, current_date)
                 )
             
             with time_cols[1]:
-                # 从 session_state 获取实际结束时间
+                # 从 session_state 获取实际结束时间 - 添加回调
                 actual_end_time = st.time_input(
                     "实际结束时间",
                     value=st.session_state.get(f"actual_end_{i}", parse_time(saved_actual.get('actual_end_time', task['planned_end_time']))),
                     key=f"actual_end_{i}",
-                    step=300
+                    step=300,
+                    on_change=lambda i=i, task=task: update_actual_execution_data(i, task, current_date)
                 )
                 
                 if actual_end_time <= actual_start_time:
@@ -846,12 +885,13 @@ if page == "今日记录":
             # 精力水平和时长显示 - 2列布局
             info_cols = st.columns(2)
             with info_cols[0]:
-                # 从 session_state 获取精力水平
+                # 从 session_state 获取精力水平 - 添加回调
                 task_energy = st.select_slider(
                     "结束后精力", 
                     options=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 
                     value=st.session_state.get(f"energy_input_{i}", saved_actual.get('post_energy', 7)),
-                    key=f"energy_input_{i}"
+                    key=f"energy_input_{i}",
+                    on_change=lambda i=i, task=task: update_actual_execution_data(i, task, current_date)
                 )
             
             with info_cols[1]:
@@ -861,31 +901,6 @@ if page == "今日记录":
                 actual_duration = calculate_duration(start_dt, end_dt)
                 st.markdown(f"##### 实际学习时长: {actual_duration}分钟")
 
-            # 保存实际执行数据到 session_state
-            if start_dt < end_dt:                    
-                actual_data = {
-                    "task_id": task['task_id'],
-                    "actual_start_time": actual_start_time,
-                    "actual_end_time": actual_end_time,
-                    "actual_duration": actual_duration,
-                    "actual_focus_duration": int(actual_duration * 0.8),
-                    "post_energy": task_energy,
-                    "completed": True
-                }
-                
-                # 更新或添加实际执行数据
-                actual_execution = st.session_state.get('actual_execution', [])
-                if i < len(actual_execution):
-                    actual_execution[i] = actual_data
-                else:
-                    actual_execution.append(actual_data)
-                st.session_state.actual_execution = actual_execution
-                
-                # 智能保存：有实际执行数据时保存
-                github_state_manager.auto_save_state()
-            else:
-                st.warning("⚠️ 请调整时间以确保结束时间在开始时间之后")
-        
         # === 反思和操作区域 ===
         st.markdown(f"##### 📝 学习反思")
 
@@ -1003,7 +1018,7 @@ if page == "今日记录":
         if not st.session_state.get('planned_tasks'):
             st.info("👆 请在上方添加和确认今日的计划任务")
         elif not st.session_state.get('tasks_confirmed'):
-            st.info("👆 请先确认今日的计划任务")                       
+            st.info("👆 请先确认今日的计划任务")          
 
 elif page == "数据看板":
     st.title("📊 学习数据看板")
