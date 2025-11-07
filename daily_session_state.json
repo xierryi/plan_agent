@@ -26,28 +26,28 @@
         "planned_duration": 60,
         "planned_focus_duration": 48,
         "difficulty": 3,
-        "planned_start_time": "19:10",
-        "planned_end_time": "20:10"
+        "planned_start_time": "19:05",
+        "planned_end_time": "20:05"
       },
       {
         "task_id": 3,
         "task_name": "经济学",
-        "subject": "math",
-        "planned_duration": 60,
-        "planned_focus_duration": 48,
+        "subject": "other",
+        "planned_duration": 0,
+        "planned_focus_duration": 0,
         "difficulty": 3,
-        "planned_start_time": "11:00",
+        "planned_start_time": "20:05",
         "planned_end_time": "12:00"
       }
     ],
     "actual_execution": [],
     "time_inputs_cache": {},
-    "last_auto_save": "2025-11-07T17:01:46.626399+08:00",
+    "last_auto_save": "2025-11-07T17:02:22.381092+08:00",
     "plan_date": "2025-11-07",
     "plan_source": "date_changed",
     "created_at": "2025-11-07T16:58:26.394020+08:00",
-    "last_modified": "2025-11-07T17:01:46.626427+08:00",
-    "saved_at": "2025-11-07T17:01:46.626431+08:00"
+    "last_modified": "2025-11-07T17:02:22.381118+08:00",
+    "saved_at": "2025-11-07T17:02:22.381123+08:00"
   },
   "2025-11-08": {
     "tasks_confirmed": false,
