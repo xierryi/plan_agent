@@ -1,1 +1,78 @@
-[]
+[
+  {
+    "date": "2025-11-20",
+    "weather": "晴",
+    "energy_level": 7,
+    "planned_tasks": [
+      {
+        "task_id": 1,
+        "task_name": "1120",
+        "subject": "econ",
+        "planned_duration": 60,
+        "planned_focus_duration": 48,
+        "difficulty": 3,
+        "planned_start_time": "09:00",
+        "planned_end_time": "10:00"
+      },
+      {
+        "task_id": 2,
+        "task_name": "11162",
+        "subject": "math",
+        "planned_duration": 60,
+        "planned_focus_duration": 48,
+        "difficulty": 3,
+        "planned_start_time": "10:00",
+        "planned_end_time": "11:00"
+      },
+      {
+        "task_id": 3,
+        "task_name": "11202",
+        "subject": "econ",
+        "planned_duration": 45,
+        "planned_focus_duration": 36,
+        "difficulty": 3,
+        "planned_start_time": "11:15",
+        "planned_end_time": "12:00"
+      }
+    ],
+    "actual_execution": [
+      {
+        "task_id": 1,
+        "actual_start_time": "09:00",
+        "actual_end_time": "10:00",
+        "actual_duration": 60,
+        "actual_focus_duration": 48,
+        "post_energy": 7,
+        "completed": true
+      },
+      {
+        "task_id": 2,
+        "actual_start_time": "10:00",
+        "actual_end_time": "11:00",
+        "actual_duration": 60,
+        "actual_focus_duration": 48,
+        "post_energy": 7,
+        "completed": true
+      },
+      {
+        "task_id": 3,
+        "actual_start_time": "11:15",
+        "actual_end_time": "12:00",
+        "actual_duration": 45,
+        "actual_focus_duration": 36,
+        "post_energy": 7,
+        "completed": true
+      }
+    ],
+    "daily_summary": {
+      "planned_total_time": 165,
+      "actual_total_time": 165,
+      "planned_focus_time": 132,
+      "actual_focus_time": 132,
+      "completion_rate": 1.0,
+      "reflection": ""
+    },
+    "created_at": "2025-11-07T04:06:52.021127",
+    "updated_at": "2025-11-07T04:06:52.021136"
+  }
+]

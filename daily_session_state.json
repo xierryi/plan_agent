@@ -222,12 +222,12 @@
     ],
     "actual_execution": [],
     "time_inputs_cache": {},
-    "last_auto_save": "2025-10-31T11:46:33.475256+08:00",
+    "last_auto_save": "2025-11-07T12:08:11.393565+08:00",
     "plan_date": "2025-11-01",
     "plan_source": "date_changed",
     "created_at": "2025-10-31T09:32:46.685437+08:00",
-    "last_modified": "2025-10-31T11:46:33.475287+08:00",
-    "saved_at": "2025-10-31T11:46:33.475293+08:00"
+    "last_modified": "2025-11-07T12:08:11.393589+08:00",
+    "saved_at": "2025-11-07T12:08:11.393593+08:00"
   },
   "2025-11-07": {
     "tasks_confirmed": false,
@@ -268,5 +268,222 @@
     "created_at": "2025-11-07T11:31:32.023622+08:00",
     "last_modified": "2025-11-07T11:32:56.546820+08:00",
     "saved_at": "2025-11-07T11:32:56.546828+08:00"
+  },
+  "2025-11-16": {
+    "tasks_confirmed": true,
+    "show_final_confirmation": false,
+    "tasks_saved": false,
+    "expander_expanded": false,
+    "current_date": "2025-11-16",
+    "current_weather": "晴",
+    "current_energy_level": 7,
+    "current_reflection": "",
+    "planned_tasks": [
+      {
+        "task_id": 1,
+        "task_name": "1116",
+        "subject": "math",
+        "planned_duration": 60,
+        "planned_focus_duration": 48,
+        "difficulty": 3,
+        "planned_start_time": "09:00",
+        "planned_end_time": "10:00"
+      },
+      {
+        "task_id": 2,
+        "task_name": "11162",
+        "subject": "math",
+        "planned_duration": 60,
+        "planned_focus_duration": 48,
+        "difficulty": 3,
+        "planned_start_time": "10:05",
+        "planned_end_time": "11:05"
+      }
+    ],
+    "actual_execution": [
+      {
+        "task_id": 1,
+        "actual_start_time": "09:00",
+        "actual_end_time": "10:00",
+        "actual_duration": 60,
+        "actual_focus_duration": 48,
+        "post_energy": 7,
+        "completed": true
+      },
+      {
+        "task_id": 2,
+        "actual_start_time": "10:05",
+        "actual_end_time": "11:05",
+        "actual_duration": 60,
+        "actual_focus_duration": 48,
+        "post_energy": 7,
+        "completed": true
+      }
+    ],
+    "time_inputs_cache": {},
+    "last_auto_save": "2025-11-07T12:08:01.544669+08:00",
+    "plan_date": "2025-11-16",
+    "plan_source": "date_changed",
+    "created_at": "2025-11-07T11:31:32.023622+08:00",
+    "last_modified": "2025-11-07T12:08:01.544723+08:00",
+    "saved_at": "2025-11-07T12:08:01.544730+08:00"
+  },
+  "2025-11-17": {
+    "tasks_confirmed": false,
+    "show_final_confirmation": false,
+    "tasks_saved": false,
+    "expander_expanded": true,
+    "current_date": "2025-11-17",
+    "current_weather": "晴",
+    "current_energy_level": 7,
+    "current_reflection": "",
+    "planned_tasks": [
+      {
+        "task_id": 1,
+        "task_name": "",
+        "subject": "math",
+        "difficulty": 3,
+        "planned_start_time": "09:00",
+        "planned_end_time": "10:00",
+        "planned_duration": 60,
+        "planned_focus_duration": 48
+      },
+      {
+        "task_id": 2,
+        "task_name": "",
+        "subject": "math",
+        "difficulty": 3,
+        "planned_start_time": "10:00",
+        "planned_end_time": "11:00",
+        "planned_duration": 60,
+        "planned_focus_duration": 48
+      }
+    ],
+    "actual_execution": [],
+    "time_inputs_cache": {},
+    "last_auto_save": "2025-11-07T11:58:33.505802+08:00",
+    "plan_date": "2025-11-17",
+    "plan_source": "date_changed",
+    "created_at": "2025-11-07T11:31:32.023622+08:00",
+    "last_modified": "2025-11-07T11:58:33.505843+08:00",
+    "saved_at": "2025-11-07T11:58:33.505850+08:00"
+  },
+  "2025-11-20": {
+    "tasks_confirmed": true,
+    "show_final_confirmation": false,
+    "tasks_saved": true,
+    "expander_expanded": false,
+    "current_date": "2025-11-20",
+    "current_weather": "晴",
+    "current_energy_level": 7,
+    "current_reflection": "",
+    "planned_tasks": [
+      {
+        "task_id": 1,
+        "task_name": "1120",
+        "subject": "econ",
+        "planned_duration": 60,
+        "planned_focus_duration": 48,
+        "difficulty": 3,
+        "planned_start_time": "09:00",
+        "planned_end_time": "10:00"
+      },
+      {
+        "task_id": 2,
+        "task_name": "11162",
+        "subject": "math",
+        "planned_duration": 60,
+        "planned_focus_duration": 48,
+        "difficulty": 3,
+        "planned_start_time": "10:00",
+        "planned_end_time": "11:00"
+      },
+      {
+        "task_id": 3,
+        "task_name": "11202",
+        "subject": "econ",
+        "planned_duration": 45,
+        "planned_focus_duration": 36,
+        "difficulty": 3,
+        "planned_start_time": "11:15",
+        "planned_end_time": "12:00"
+      }
+    ],
+    "actual_execution": [
+      {
+        "task_id": 1,
+        "actual_start_time": "09:00",
+        "actual_end_time": "10:00",
+        "actual_duration": 60,
+        "actual_focus_duration": 48,
+        "post_energy": 7,
+        "completed": true
+      },
+      {
+        "task_id": 2,
+        "actual_start_time": "10:00",
+        "actual_end_time": "11:00",
+        "actual_duration": 60,
+        "actual_focus_duration": 48,
+        "post_energy": 7,
+        "completed": true
+      },
+      {
+        "task_id": 3,
+        "actual_start_time": "11:15",
+        "actual_end_time": "12:00",
+        "actual_duration": 45,
+        "actual_focus_duration": 36,
+        "post_energy": 7,
+        "completed": true
+      }
+    ],
+    "time_inputs_cache": {},
+    "last_auto_save": "2025-11-07T12:07:33.681790+08:00",
+    "plan_date": "2025-11-20",
+    "plan_source": "date_changed",
+    "created_at": "2025-11-07T11:31:32.023622+08:00",
+    "last_modified": "2025-11-07T12:07:33.681816+08:00",
+    "saved_at": "2025-11-07T12:07:33.681820+08:00"
+  },
+  "2025-11-22": {
+    "tasks_confirmed": false,
+    "show_final_confirmation": false,
+    "tasks_saved": false,
+    "expander_expanded": true,
+    "current_date": "2025-11-22",
+    "current_weather": "晴",
+    "current_energy_level": 7,
+    "current_reflection": "",
+    "planned_tasks": [
+      {
+        "task_id": 1,
+        "task_name": "1120",
+        "subject": "econ",
+        "planned_duration": 60,
+        "planned_focus_duration": 48,
+        "difficulty": 3,
+        "planned_start_time": "09:00",
+        "planned_end_time": "10:00"
+      },
+      {
+        "task_id": 2,
+        "task_name": "11162",
+        "subject": "math",
+        "planned_duration": 60,
+        "planned_focus_duration": 48,
+        "difficulty": 3,
+        "planned_start_time": "10:00",
+        "planned_end_time": "11:00"
+      }
+    ],
+    "actual_execution": [],
+    "time_inputs_cache": {},
+    "last_auto_save": "2025-11-07T12:07:50.168381+08:00",
+    "plan_date": "2025-11-22",
+    "plan_source": "date_changed",
+    "created_at": "2025-11-07T11:31:32.023622+08:00",
+    "last_modified": "2025-11-07T12:07:50.168406+08:00",
+    "saved_at": "2025-11-07T12:07:50.168411+08:00"
   }
 }
