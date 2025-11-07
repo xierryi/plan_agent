@@ -131,13 +131,13 @@
       },
       {
         "task_id": 7,
-        "task_name": "",
+        "task_name": "微波",
         "subject": "math",
+        "planned_duration": 60,
+        "planned_focus_duration": 48,
         "difficulty": 3,
         "planned_start_time": "15:00",
-        "planned_end_time": "16:00",
-        "planned_duration": 60,
-        "planned_focus_duration": 48
+        "planned_end_time": "16:00"
       },
       {
         "task_id": 8,
@@ -152,11 +152,11 @@
     ],
     "actual_execution": [],
     "time_inputs_cache": {},
-    "last_auto_save": "2025-11-07T17:10:55.979887+08:00",
+    "last_auto_save": "2025-11-07T17:11:31.822224+08:00",
     "plan_date": "2025-11-08",
     "plan_source": "date_changed",
     "created_at": "2025-11-07T16:58:26.394020+08:00",
-    "last_modified": "2025-11-07T17:10:55.979913+08:00",
-    "saved_at": "2025-11-07T17:10:55.979917+08:00"
+    "last_modified": "2025-11-07T17:11:31.822294+08:00",
+    "saved_at": "2025-11-07T17:11:31.822298+08:00"
   }
 }
