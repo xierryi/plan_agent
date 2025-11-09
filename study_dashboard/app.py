@@ -23,6 +23,8 @@ except ImportError:
     from data_manager import StudyDataManager
     data_manager = StudyDataManager()
 
+MAX_TASK_COUNT = 12
+
 def handle_date_change(selected_date):
     """处理日期变更 - 更新所有控件状态"""
     current_date = st.session_state.get('current_date', datetime.now().date())
@@ -603,7 +605,7 @@ if page == "今日记录":
         if current_task_count == 0:
             current_task_count = 2  # 默认值
 
-        task_count = st.number_input("任务数量", min_value=1, max_value=8, value=current_task_count)
+        task_count = st.number_input("任务数量", min_value=1, max_value=MAX_TASK_COUNT, value=current_task_count)
 
         # 如果任务数量变化，调整 planned_tasks 数组
         planned_tasks = st.session_state.get('planned_tasks', [])
