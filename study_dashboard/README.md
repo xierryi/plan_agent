@@ -179,7 +179,7 @@ pip install -r requirements.txt
 # 创建 .env 文件
 echo "OPENAI_API_KEY=your_api_key_here" > .env
 echo "OPENAI_BASE_URL=https://api.openai.com/v1" >> .env
-echo "MODEL_NAME=gpt-4o-mini" >> .env
+echo "MODEL_NAME=gemini-2.5-pro" >> .env
 
 # 5. 运行应用
 streamlit run app.py
@@ -239,7 +239,7 @@ study_dashboard/
 |-------|------|-------|
 | `OPENAI_API_KEY` | OpenAI API 密钥 | `sk-xxx...` |
 | `OPENAI_BASE_URL` | API 端点（可选） | `https://api.openai.com/v1` |
-| `MODEL_NAME` | 使用的模型 | `gpt-4o-mini` |
+| `MODEL_NAME` | 使用的模型 | `gemini-2.5-pro` |
 | `GITHUB_TOKEN` | GitHub Personal Token | `ghp_xxx...` |
 | `GITHUB_OWNER` | GitHub 用户名 | `username` |
 | `GITHUB_REPO` | 仓库名 | `study-data` |
