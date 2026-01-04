@@ -277,12 +277,13 @@ st.set_page_config(
     initial_sidebar_state="collapsed"  # 手机端默认收起侧边栏
 )
 
-# 初始化管理器
+# 初始化 AI Agent（带数据管理器）
 @st.cache_resource
-def get_agent():
-    return StudyAgent()
+def get_agent(_data_manager):
+    """创建带数据管理器的 Agent"""
+    return StudyAgent(_data_manager)
 
-agent = get_agent()
+agent = get_agent(data_manager)
 
 # 初始化当前日期
 if 'current_date' not in st.session_state:
@@ -297,7 +298,7 @@ if st.session_state.get('planned_tasks'):
 
 # 侧边栏导航
 st.sidebar.title("📚 学习分析系统")
-page = st.sidebar.selectbox("导航", ["今日记录", "数据看板", "智能分析", "历史数据", "GitHub设置"])
+page = st.sidebar.selectbox("导航", ["今日记录", "AI 助手", "数据看板", "智能分析", "历史数据", "GitHub设置"])
 
 # 计划管理侧边栏
 def create_plan_management_sidebar():
@@ -1021,6 +1022,147 @@ if page == "今日记录":
             st.info("👆 请在上方添加和确认今日的计划任务")
         elif not st.session_state.get('tasks_confirmed'):
             st.info("👆 请先确认今日的计划任务")          
+
+# ==================== AI 助手页面 ====================
+elif page == "AI 助手":
+    st.title("🤖 AI 学习助手")
+    st.markdown("与 AI 助手对话，获取学习分析、建议和智能计划")
+    
+    # 初始化 Agent（带数据管理器）
+    if 'study_agent' not in st.session_state:
+        st.session_state.study_agent = StudyAgent(data_manager)
+    else:
+        # 确保数据管理器已设置
+        st.session_state.study_agent.set_data_manager(data_manager)
+    
+    # 初始化对话历史显示
+    if 'chat_messages' not in st.session_state:
+        st.session_state.chat_messages = []
+    
+    # 功能提示卡片
+    with st.expander("💡 我能帮你做什么？", expanded=len(st.session_state.chat_messages) == 0):
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("""
+            **📊 数据查询**
+            - "我上周学了多少小时？"
+            - "查看最近7天的学习记录"
+            - "2025-01-03 我学了什么？"
+            
+            **📈 效率分析**
+            - "分析我的学习模式"
+            - "哪个学科效率最高？"
+            - "我的完成率怎么样？"
+            """)
+        with col2:
+            st.markdown("""
+            **📅 智能规划**
+            - "帮我规划明天的学习"
+            - "生成一个3小时的学习计划"
+            - "重点安排数学和物理"
+            
+            **💡 改进建议**
+            - "给我一些学习建议"
+            - "如何提高效率？"
+            - "时间管理有什么问题？"
+            """)
+    
+    # 快捷操作按钮
+    st.markdown("##### ⚡ 快捷操作")
+    quick_cols = st.columns(4)
+    
+    quick_prompts = [
+        ("📊 周统计", "帮我看看这周的学习统计数据"),
+        ("📈 效率分析", "分析一下我最近的学习效率和模式"),
+        ("📅 生成计划", "基于我的历史数据，帮我规划明天的学习"),
+        ("💡 给点建议", "根据我的学习数据，给我一些改进建议")
+    ]
+    
+    for i, (label, prompt) in enumerate(quick_prompts):
+        with quick_cols[i]:
+            if st.button(label, use_container_width=True, key=f"quick_{i}"):
+                st.session_state.pending_prompt = prompt
+                st.rerun()
+    
+    st.markdown("---")
+    
+    # 显示对话历史
+    chat_container = st.container()
+    with chat_container:
+        for message in st.session_state.chat_messages:
+            if message["role"] == "user":
+                with st.chat_message("user", avatar="👤"):
+                    st.markdown(message["content"])
+            else:
+                with st.chat_message("assistant", avatar="🤖"):
+                    st.markdown(message["content"])
+    
+    # 处理待处理的快捷提示
+    if 'pending_prompt' in st.session_state:
+        prompt = st.session_state.pending_prompt
+        del st.session_state.pending_prompt
+        
+        # 添加用户消息
+        st.session_state.chat_messages.append({"role": "user", "content": prompt})
+        
+        # 获取 AI 回复
+        with st.spinner("🤔 AI 正在思考..."):
+            response = st.session_state.study_agent.chat(prompt)
+        
+        # 添加助手回复
+        st.session_state.chat_messages.append({"role": "assistant", "content": response})
+        st.rerun()
+    
+    # 用户输入
+    user_input = st.chat_input("输入你的问题...", key="chat_input")
+    
+    if user_input:
+        # 添加用户消息
+        st.session_state.chat_messages.append({"role": "user", "content": user_input})
+        
+        # 显示用户消息
+        with st.chat_message("user", avatar="👤"):
+            st.markdown(user_input)
+        
+        # 获取 AI 回复
+        with st.chat_message("assistant", avatar="🤖"):
+            with st.spinner("🤔 AI 正在分析..."):
+                response = st.session_state.study_agent.chat(user_input)
+            st.markdown(response)
+        
+        # 保存助手回复
+        st.session_state.chat_messages.append({"role": "assistant", "content": response})
+    
+    # 清空对话按钮
+    st.markdown("---")
+    col1, col2, col3 = st.columns([1, 1, 2])
+    with col1:
+        if st.button("🗑️ 清空对话", use_container_width=True):
+            st.session_state.chat_messages = []
+            st.session_state.study_agent.clear_history()
+            st.rerun()
+    with col2:
+        if st.button("🔄 重置 Agent", use_container_width=True):
+            st.session_state.study_agent = StudyAgent(data_manager)
+            st.session_state.chat_messages = []
+            st.success("Agent 已重置")
+            st.rerun()
+    
+    # 显示 Agent 信息
+    with st.expander("🔧 Agent 信息"):
+        st.markdown(f"""
+        **模型**: `{st.session_state.study_agent.model_name}`
+        
+        **可用工具**:
+        - `get_weekly_stats` - 获取学习统计
+        - `get_subject_analysis` - 学科分析
+        - `query_history` - 查询历史
+        - `generate_smart_plan` - 生成计划
+        - `analyze_learning_pattern` - 分析模式
+        - `get_improvement_suggestions` - 改进建议
+        
+        **对话轮数**: {len(st.session_state.chat_messages) // 2}
+        """)
 
 elif page == "数据看板":
     st.title("📊 学习数据看板")
