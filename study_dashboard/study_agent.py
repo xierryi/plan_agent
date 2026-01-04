@@ -43,9 +43,10 @@ safe_load_dotenv()
 class StudyAgent:
     def __init__(self):
         self.client = OpenAI(
-            api_key=os.getenv('OPENAI_API_KEY')
+            api_key=os.getenv('OPENAI_API_KEY'),
+            base_url=os.getenv('OPENAI_BASE_URL')
         )
-        self.model =os.getenv('MODEL_NAME')
+        self.model =os.getenv('OPENAI_MODEL')
         self.system_prompt = """你是一个专业的学习效率分析助手。请基于用户提供的学习数据，提供专业、具体、可操作的分析和建议。分析要基于数据事实，建议要具体可行。"""
     
     def analyze_weekly_trends(self, weekly_data):
