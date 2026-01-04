@@ -1,9 +1,4 @@
 import json
-try:
-    from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
-except ImportError:
-    # 兼容旧版本
-    from langchain.schema import BaseMessage, HumanMessage, SystemMessage
 import os
 import logging
 from dotenv import load_dotenv
@@ -46,7 +41,7 @@ class StudyAgent:
             api_key=os.getenv("OPENAI_API_KEY"),
             base_url=os.getenv("OPENAI_BASE_URL")
         )
-        self.model_name =os.getenv('MODEL_NAME')
+        self.model_name = os.getenv('MODEL_NAME', 'gpt-3.5-turbo')
         self.system_prompt = """你是一个专业的学习效率分析助手。请基于用户提供的学习数据，提供专业、具体、可操作的分析和建议。分析要基于数据事实，建议要具体可行。"""
     
     def analyze_weekly_trends(self, weekly_data):
@@ -69,7 +64,7 @@ class StudyAgent:
         
         try:
             response = self.client.chat.completions.create(
-                model=self.model,
+                model=self.model_name,
                 messages=[
                     {"role": "system", "content": self.system_prompt},
                     {"role": "user", "content": context}
@@ -99,7 +94,7 @@ class StudyAgent:
         
         try:
             response = self.client.chat.completions.create(
-                model=self.model,
+                model=self.model_name,
                 messages=[
                     {"role": "system", "content": self.system_prompt},
                     {"role": "user", "content": context}
@@ -109,33 +104,3 @@ class StudyAgent:
             return response.choices[0].message.content
         except Exception as e:
             return f"建议服务暂时不可用: {str(e)}"
-    
-    def generate_tomorrow_plan(self, recent_data):
-        """基于历史数据生成明日计划建议"""
-        if not recent_data:
-            return "暂无足够数据生成个性化建议。"
-        
-        context = f"""
-        基于用户最近的学习记录：
-        {json.dumps(recent_data[-3:], ensure_ascii=False, indent=2)}
-        
-        请为明天的时间规划提供具体建议，包括：
-        1. 最佳学习时段推荐
-        2. 各学科的时间分配建议
-        3. 需要特别注意的事项
-        
-        请给出具体、可执行的建议。
-        """
-        
-        try:
-            response = self.llm.invoke([
-                SystemMessage(content=self.system_prompt),
-                HumanMessage(content=context)
-            ])
-            return response.content
-        except Exception as e:
-            return "建议服务暂时不可用，请手动规划明日安排。"
-        
-#if __name__ == "__main__":
-#    openai_api_key=os.getenv("OPENAI_API_KEY")
-#   print(f"{openai_api_key}")
