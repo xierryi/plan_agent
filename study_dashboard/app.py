@@ -1039,6 +1039,99 @@ elif page == "AI 助手":
     if 'chat_messages' not in st.session_state:
         st.session_state.chat_messages = []
     
+    # ==================== 一键生成计划功能 ====================
+    st.markdown("### 🎯 一键生成今日计划")
+    
+    plan_cols = st.columns([2, 1, 1, 1])
+    with plan_cols[0]:
+        plan_hours = st.slider("计划学习时长（小时）", 1, 8, 4, key="ai_plan_hours")
+    with plan_cols[1]:
+        focus_options = {"无": None, "数学": "math", "物理": "physics", "经济": "econ", "计算机": "cs"}
+        focus_label = st.selectbox("重点学科", list(focus_options.keys()), key="ai_focus_subject")
+        focus_subject = focus_options[focus_label]
+    with plan_cols[2]:
+        plan_date_option = st.selectbox("计划日期", ["今天", "明天"], key="ai_plan_date")
+    with plan_cols[3]:
+        st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+        generate_and_apply = st.button("🚀 生成并应用", type="primary", use_container_width=True)
+    
+    if generate_and_apply:
+        # 确定计划日期
+        if plan_date_option == "今天":
+            target_date = datetime.now().date()
+        else:
+            target_date = (datetime.now() + timedelta(days=1)).date()
+        
+        with st.spinner("🤖 AI 正在分析历史数据并生成最优计划..."):
+            # 使用工具生成计划
+            from tools import StudyTools
+            tools = StudyTools(data_manager)
+            plan_result = tools.generate_smart_plan(
+                date=target_date.isoformat(),
+                total_hours=plan_hours,
+                focus_subject=focus_subject
+            )
+        
+        if plan_result['success']:
+            plan_data = plan_result['data']
+            tasks = plan_data['tasks']
+            
+            # 转换为应用格式
+            planned_tasks = []
+            for i, task in enumerate(tasks):
+                # 解析时间
+                start_parts = task['start_time'].split(':')
+                end_parts = task['end_time'].split(':')
+                start_time_obj = time(int(start_parts[0]), int(start_parts[1]))
+                end_time_obj = time(int(end_parts[0]), int(end_parts[1]))
+                
+                planned_tasks.append({
+                    'task_id': i + 1,
+                    'task_name': f"{task['subject_name']}学习",
+                    'subject': task['subject'],
+                    'difficulty': task.get('difficulty', 3),
+                    'planned_start_time': start_time_obj,
+                    'planned_end_time': end_time_obj,
+                    'planned_duration': task['duration_minutes'],
+                    'planned_focus_duration': int(task['duration_minutes'] * 0.8)
+                })
+            
+            # 应用到 session state
+            st.session_state.current_date = target_date
+            st.session_state.planned_tasks = planned_tasks
+            st.session_state.tasks_confirmed = False
+            st.session_state.tasks_saved = False
+            st.session_state.show_final_confirmation = False
+            st.session_state.expander_expanded = True
+            st.session_state.actual_execution = []
+            
+            # 更新表单组件状态
+            for i, task in enumerate(planned_tasks):
+                st.session_state[f"task_name_{i}"] = task['task_name']
+                st.session_state[f"subject_{i}"] = task['subject']
+                st.session_state[f"difficulty_{i}"] = task['difficulty']
+                st.session_state[f"start_{i}"] = task['planned_start_time']
+                st.session_state[f"end_{i}"] = task['planned_end_time']
+            
+            # 保存到 GitHub
+            github_state_manager.auto_save_state(force=True)
+            
+            st.success(f"✅ 已生成 {len(tasks)} 个任务，总计 {plan_hours} 小时！")
+            st.info("💡 请前往「今日记录」页面查看和确认计划")
+            
+            # 显示生成的计划预览
+            with st.expander("📋 计划预览", expanded=True):
+                for task in tasks:
+                    st.markdown(f"- **{task['subject_name']}**: {task['start_time']} - {task['end_time']} ({task['duration_minutes']}分钟)")
+                if plan_data.get('tips'):
+                    st.markdown("**💡 提示：**")
+                    for tip in plan_data['tips']:
+                        st.markdown(f"- {tip}")
+        else:
+            st.error(f"生成失败: {plan_result['message']}")
+    
+    st.markdown("---")
+    
     # 功能提示卡片
     with st.expander("💡 我能帮你做什么？", expanded=len(st.session_state.chat_messages) == 0):
         col1, col2 = st.columns(2)
