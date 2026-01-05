@@ -125,6 +125,18 @@ export const useStudyStore = defineStore('study', () => {
       await api.deleteRecord(date)
       // 从本地数据中移除
       historyData.value = historyData.value.filter(d => d.date !== date)
+      
+      // 如果删除的是当前日期的记录，重置状态
+      if (date === currentDate.value) {
+        plannedTasks.value = []
+        actualExecution.value = []
+        tasksConfirmed.value = false
+        tasksSaved.value = false
+        reflection.value = ''
+        // 清除本地缓存
+        localStorage.removeItem('study_today_cache')
+      }
+      
       return true
     } catch (e) {
       error.value = e.message
