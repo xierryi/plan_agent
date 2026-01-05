@@ -1,11 +1,12 @@
 fastapi==0.109.0
-uvicorn==0.27.0
+uvicorn[standard]==0.27.0
 python-dotenv==1.0.0
 openai==1.12.0
 pydantic==2.5.3
 httpx==0.26.0
 python-multipart==0.0.6
 requests==2.31.0
+gunicorn==21.2.0
 
 # 原项目依赖（data_manager, study_agent, tools 等模块需要）
 pandas>=2.0.0

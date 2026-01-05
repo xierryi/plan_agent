@@ -19,10 +19,18 @@ app = FastAPI(
     version="2.0.0"
 )
 
-# CORS 配置
+# CORS 配置 - 支持环境变量配置允许的域名
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000").split(",")
+# 生产环境添加 Vercel 域名
+if os.getenv("RENDER"):
+    allowed_origins.extend([
+        "https://*.vercel.app",
+        "https://study-dashboard.vercel.app",
+    ])
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000", "*"],
+    allow_origins=["*"],  # 暂时允许所有域名，生产环境可以限制
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
