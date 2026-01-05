@@ -33,6 +33,58 @@ const formatDuration = (minutes) => {
   return mins > 0 ? `${hours}小时${mins}分钟` : `${hours}小时`
 }
 
+// 时间转分钟数（用于比较）
+const timeToMinutes = (timeStr) => {
+  if (!timeStr) return 0
+  const [h, m] = timeStr.split(':').map(Number)
+  return h * 60 + m
+}
+
+// 检查时间冲突
+const timeConflicts = computed(() => {
+  const conflicts = []
+  const tasks = studyStore.plannedTasks
+  
+  for (let i = 0; i < tasks.length; i++) {
+    const task1 = tasks[i]
+    if (!task1.planned_start_time || !task1.planned_end_time || !task1.task_name) continue
+    
+    const start1 = timeToMinutes(task1.planned_start_time)
+    const end1 = timeToMinutes(task1.planned_end_time)
+    
+    // 检查结束时间是否在开始时间之前
+    if (end1 <= start1) {
+      conflicts.push({
+        type: 'invalid',
+        message: `「${task1.task_name || '任务' + (i+1)}」结束时间必须晚于开始时间`
+      })
+      continue
+    }
+    
+    // 检查与其他任务的冲突
+    for (let j = i + 1; j < tasks.length; j++) {
+      const task2 = tasks[j]
+      if (!task2.planned_start_time || !task2.planned_end_time || !task2.task_name) continue
+      
+      const start2 = timeToMinutes(task2.planned_start_time)
+      const end2 = timeToMinutes(task2.planned_end_time)
+      
+      // 检查时间重叠
+      if (start1 < end2 && end1 > start2) {
+        conflicts.push({
+          type: 'overlap',
+          message: `「${task1.task_name}」和「${task2.task_name}」时间重叠`
+        })
+      }
+    }
+  }
+  
+  return conflicts
+})
+
+// 是否有时间冲突
+const hasConflicts = computed(() => timeConflicts.value.length > 0)
+
 // 确认任务
 const handleConfirmTasks = () => {
   if (studyStore.plannedTasks.length === 0) {
@@ -43,6 +95,12 @@ const handleConfirmTasks = () => {
   const hasEmptyTask = studyStore.plannedTasks.some(t => !t.task_name.trim())
   if (hasEmptyTask) {
     alert('请填写所有任务名称')
+    return
+  }
+  
+  // 检查时间冲突
+  if (hasConflicts.value) {
+    alert('❌ 存在时间冲突，请先解决：\n\n' + timeConflicts.value.map(c => '• ' + c.message).join('\n'))
     return
   }
   
@@ -239,6 +297,20 @@ const dateStatus = computed(() => {
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- 时间冲突警告 -->
+        <div v-if="hasConflicts && !studyStore.tasksConfirmed" class="p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
+          <div class="flex items-center gap-2 text-red-400 font-medium mb-2">
+            <span>⚠️</span>
+            <span>检测到时间冲突</span>
+          </div>
+          <ul class="space-y-1 text-sm text-red-300">
+            <li v-for="(conflict, idx) in timeConflicts" :key="idx" class="flex items-start gap-2">
+              <span>•</span>
+              <span>{{ conflict.message }}</span>
+            </li>
+          </ul>
         </div>
 
         <!-- 总计 -->
