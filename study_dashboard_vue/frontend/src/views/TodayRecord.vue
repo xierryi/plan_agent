@@ -242,6 +242,14 @@ const isToday = computed(() => {
   return studyStore.currentDate === new Date().toISOString().split('T')[0]
 })
 
+// 滚动到指定位置
+const scrollTo = (id) => {
+  const element = document.getElementById(id)
+  if (element) {
+    element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+}
+
 const dateStatus = computed(() => {
   const today = new Date().toISOString().split('T')[0]
   if (studyStore.currentDate === today) return 'today'
@@ -312,7 +320,7 @@ const dateStatus = computed(() => {
     </div>
 
     <!-- 计划任务 -->
-    <div class="card animate-fade-in delay-200">
+    <div id="plan-tasks" class="card animate-fade-in delay-200">
       <div class="flex items-center justify-between mb-6">
         <div class="flex items-center gap-3">
           <!-- 折叠按钮（确认后显示） -->
@@ -515,7 +523,7 @@ const dateStatus = computed(() => {
     </div>
 
     <!-- 实际执行（确认后显示） -->
-    <div v-if="studyStore.tasksConfirmed" class="card animate-fade-in">
+    <div id="actual-execution" v-if="studyStore.tasksConfirmed" class="card animate-fade-in">
       <h3 class="text-lg font-semibold text-white mb-6">✅ 实际执行</h3>
       
       <div class="space-y-4">
@@ -690,6 +698,31 @@ const dateStatus = computed(() => {
         </div>
       </div>
     </Teleport>
+
+    <!-- 移动端悬浮快速导航（确认后显示） -->
+    <div 
+      v-if="studyStore.tasksConfirmed && !studyStore.tasksSaved" 
+      class="lg:hidden fixed right-4 bottom-24 z-40 flex flex-col gap-2"
+    >
+      <button 
+        @click="scrollTo('plan-tasks')"
+        class="w-12 h-12 rounded-full bg-slate-800/90 backdrop-blur border border-slate-700 
+               flex items-center justify-center text-xl shadow-lg
+               active:scale-95 transition-transform"
+        title="跳转到计划"
+      >
+        📝
+      </button>
+      <button 
+        @click="scrollTo('actual-execution')"
+        class="w-12 h-12 rounded-full bg-primary-500/90 backdrop-blur border border-primary-400 
+               flex items-center justify-center text-xl shadow-lg shadow-primary-500/25
+               active:scale-95 transition-transform"
+        title="跳转到执行"
+      >
+        ✅
+      </button>
+    </div>
   </div>
 </template>
 
