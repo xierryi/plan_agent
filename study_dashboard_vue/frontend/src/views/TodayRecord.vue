@@ -103,6 +103,32 @@ watch(selectedDate, (newDate) => {
 // 计划任务折叠状态
 const isPlanCollapsed = ref(false)
 
+// 按时间排序的计划任务（带原始索引）
+const sortedPlannedTasks = computed(() => {
+  return studyStore.plannedTasks
+    .map((task, index) => ({ ...task, originalIndex: index }))
+    .sort((a, b) => {
+      const timeA = a.planned_start_time || '99:99'
+      const timeB = b.planned_start_time || '99:99'
+      return timeA.localeCompare(timeB)
+    })
+})
+
+// 按时间排序的实际执行（带原始索引）
+const sortedActualExecution = computed(() => {
+  return studyStore.actualExecution
+    .map((exec, index) => ({ 
+      ...exec, 
+      originalIndex: index,
+      plannedTask: studyStore.plannedTasks[index]
+    }))
+    .sort((a, b) => {
+      const timeA = a.actual_start_time || a.plannedTask?.planned_start_time || '99:99'
+      const timeB = b.actual_start_time || b.plannedTask?.planned_start_time || '99:99'
+      return timeA.localeCompare(timeB)
+    })
+})
+
 // 时间格式化
 const formatDuration = (minutes) => {
   if (minutes < 60) return `${minutes}分钟`
@@ -336,11 +362,11 @@ const dateStatus = computed(() => {
           </thead>
           <tbody>
             <tr 
-              v-for="(task, index) in studyStore.plannedTasks" 
+              v-for="(task, idx) in sortedPlannedTasks" 
               :key="task.task_id"
               class="border-b border-slate-800 hover:bg-slate-800/30"
             >
-              <td class="py-3 px-4 text-slate-500">{{ index + 1 }}</td>
+              <td class="py-3 px-4 text-slate-500">{{ idx + 1 }}</td>
               <td class="py-3 px-4 text-white font-medium">{{ task.task_name }}</td>
               <td class="py-3 px-4">
                 <span class="px-2 py-1 bg-slate-800 rounded text-slate-300 text-xs">
@@ -492,8 +518,8 @@ const dateStatus = computed(() => {
       
       <div class="space-y-4">
         <div 
-          v-for="(exec, index) in studyStore.actualExecution" 
-          :key="exec.task_id"
+          v-for="(item, idx) in sortedActualExecution" 
+          :key="item.task_id"
           class="p-4 bg-slate-800/50 rounded-xl border border-slate-700"
         >
           <div class="flex items-center gap-4 mb-4">
@@ -501,27 +527,27 @@ const dateStatus = computed(() => {
               <label class="label">实际任务名称</label>
               <input 
                 type="text"
-                v-model="exec.actual_task_name"
+                v-model="studyStore.actualExecution[item.originalIndex].actual_task_name"
                 class="input"
-                :placeholder="studyStore.plannedTasks[index]?.task_name"
+                :placeholder="item.plannedTask?.task_name"
                 :disabled="studyStore.tasksSaved"
                 @input="cacheData"
               />
-              <div v-if="exec.actual_task_name !== studyStore.plannedTasks[index]?.task_name" class="text-xs text-amber-400 mt-1">
-                原计划：{{ studyStore.plannedTasks[index]?.task_name }}
+              <div v-if="studyStore.actualExecution[item.originalIndex].actual_task_name !== item.plannedTask?.task_name" class="text-xs text-amber-400 mt-1">
+                原计划：{{ item.plannedTask?.task_name }}
               </div>
             </div>
             <div class="pt-6">
               <label class="flex items-center gap-2 cursor-pointer">
                 <input 
                   type="checkbox" 
-                  v-model="exec.completed"
+                  v-model="studyStore.actualExecution[item.originalIndex].completed"
                   class="w-5 h-5 rounded border-slate-600 text-primary-500 focus:ring-primary-500"
                   :disabled="studyStore.tasksSaved"
                   @change="cacheData"
                 />
-                <span :class="exec.completed ? 'text-emerald-400' : 'text-slate-500'">
-                  {{ exec.completed ? '已完成' : '未完成' }}
+                <span :class="studyStore.actualExecution[item.originalIndex].completed ? 'text-emerald-400' : 'text-slate-500'">
+                  {{ studyStore.actualExecution[item.originalIndex].completed ? '已完成' : '未完成' }}
                 </span>
               </label>
             </div>
@@ -532,26 +558,26 @@ const dateStatus = computed(() => {
               <label class="label">实际开始</label>
               <input 
                 type="time"
-                v-model="exec.actual_start_time"
+                v-model="studyStore.actualExecution[item.originalIndex].actual_start_time"
                 class="input"
                 :disabled="studyStore.tasksSaved"
-                @change="studyStore.updateExecution(index, { actual_start_time: exec.actual_start_time }); cacheData()"
+                @change="studyStore.updateExecution(item.originalIndex, { actual_start_time: studyStore.actualExecution[item.originalIndex].actual_start_time }); cacheData()"
               />
             </div>
             <div>
               <label class="label">实际结束</label>
               <input 
                 type="time"
-                v-model="exec.actual_end_time"
+                v-model="studyStore.actualExecution[item.originalIndex].actual_end_time"
                 class="input"
                 :disabled="studyStore.tasksSaved"
-                @change="studyStore.updateExecution(index, { actual_end_time: exec.actual_end_time }); cacheData()"
+                @change="studyStore.updateExecution(item.originalIndex, { actual_end_time: studyStore.actualExecution[item.originalIndex].actual_end_time }); cacheData()"
               />
             </div>
             <div>
               <label class="label">结束后精力</label>
               <select 
-                v-model.number="exec.post_energy" 
+                v-model.number="studyStore.actualExecution[item.originalIndex].post_energy" 
                 class="input"
                 :disabled="studyStore.tasksSaved"
                 @change="cacheData"
@@ -561,7 +587,7 @@ const dateStatus = computed(() => {
             </div>
             <div class="flex items-end">
               <div class="px-4 py-3 bg-accent-500/20 rounded-xl text-accent-400 font-medium w-full text-center">
-                {{ formatDuration(exec.actual_duration) }}
+                {{ formatDuration(studyStore.actualExecution[item.originalIndex].actual_duration) }}
               </div>
             </div>
           </div>
@@ -627,7 +653,7 @@ const dateStatus = computed(() => {
               </thead>
               <tbody>
                 <tr 
-                  v-for="task in studyStore.plannedTasks" 
+                  v-for="task in sortedPlannedTasks" 
                   :key="task.task_id"
                   class="border-b border-slate-700/50"
                 >
