@@ -166,6 +166,20 @@ async def get_record_by_date(date: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.delete("/api/records/{date}")
+async def delete_record(date: str):
+    """删除指定日期的记录"""
+    try:
+        success = data_manager.delete_record(date)
+        if success:
+            return {"success": True, "message": f"已删除 {date} 的记录"}
+        raise HTTPException(status_code=404, detail="记录不存在")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ---------- 统计分析 ----------
 
 @app.get("/api/stats/weekly")

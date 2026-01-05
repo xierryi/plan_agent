@@ -56,6 +56,36 @@ const formatDate = (dateStr) => {
     weekday: 'short'
   })
 }
+
+// 删除功能
+const showDeleteConfirm = ref(false)
+const recordToDelete = ref(null)
+
+const confirmDelete = (record, event) => {
+  event.stopPropagation()
+  recordToDelete.value = record
+  showDeleteConfirm.value = true
+}
+
+const cancelDelete = () => {
+  showDeleteConfirm.value = false
+  recordToDelete.value = null
+}
+
+const executeDelete = async () => {
+  if (!recordToDelete.value) return
+  
+  const success = await studyStore.deleteRecord(recordToDelete.value.date)
+  if (success) {
+    // 如果删除的是当前选中的记录，清除选中状态
+    if (selectedDate.value === recordToDelete.value.date) {
+      selectedDate.value = null
+      selectedRecord.value = null
+    }
+  }
+  showDeleteConfirm.value = false
+  recordToDelete.value = null
+}
 </script>
 
 <template>
@@ -84,18 +114,27 @@ const formatDate = (dateStr) => {
         </div>
         
         <div v-if="sortedHistory.length > 0" class="space-y-2 max-h-[600px] overflow-y-auto pr-2">
-          <button
+          <div
             v-for="record in sortedHistory"
             :key="record.date"
             @click="selectRecord(record)"
             :class="[
-              'w-full p-4 rounded-xl text-left transition-all duration-200',
+              'w-full p-4 rounded-xl text-left transition-all duration-200 cursor-pointer relative group',
               selectedDate === record.date 
                 ? 'bg-gradient-to-r from-primary-500/20 to-accent-500/20 border border-primary-500/30' 
                 : 'bg-slate-800/50 border border-slate-700 hover:border-slate-600'
             ]"
           >
-            <div class="font-medium text-white">{{ formatDate(record.date) }}</div>
+            <div class="flex items-start justify-between">
+              <div class="font-medium text-white">{{ formatDate(record.date) }}</div>
+              <button
+                @click="confirmDelete(record, $event)"
+                class="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all"
+                title="删除记录"
+              >
+                🗑️
+              </button>
+            </div>
             <div class="text-sm text-slate-500 mt-1">
               {{ record.planned_tasks?.length || 0 }} 个任务 · 
               {{ formatDuration(record.daily_summary?.actual_total_time) }}
@@ -113,7 +152,7 @@ const formatDate = (dateStr) => {
                 {{ ((record.daily_summary?.completion_rate || 0) * 100).toFixed(0) }}%
               </span>
             </div>
-          </button>
+          </div>
         </div>
         
         <div v-else class="text-center py-12 text-slate-500">
@@ -238,5 +277,52 @@ const formatDate = (dateStr) => {
         </div>
       </div>
     </div>
+
+    <!-- 删除确认弹窗 -->
+    <Teleport to="body">
+      <div 
+        v-if="showDeleteConfirm" 
+        class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
+        @click="cancelDelete"
+      >
+        <div 
+          class="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl"
+          @click.stop
+        >
+          <div class="text-center">
+            <div class="text-5xl mb-4">⚠️</div>
+            <h3 class="text-xl font-semibold text-white mb-2">确认删除</h3>
+            <p class="text-slate-400 mb-2">
+              确定要删除 <span class="text-white font-medium">{{ formatDate(recordToDelete?.date) }}</span> 的学习记录吗？
+            </p>
+            <p class="text-sm text-red-400 mb-6">此操作不可撤销！</p>
+            
+            <div v-if="recordToDelete" class="bg-slate-800/50 rounded-xl p-4 mb-6 text-left">
+              <div class="text-sm text-slate-500 mb-1">记录摘要</div>
+              <div class="text-slate-300">
+                {{ recordToDelete.planned_tasks?.length || 0 }} 个任务 · 
+                {{ formatDuration(recordToDelete.daily_summary?.actual_total_time) }}
+              </div>
+            </div>
+            
+            <div class="flex gap-3">
+              <button 
+                @click="cancelDelete"
+                class="flex-1 btn-secondary"
+              >
+                取消
+              </button>
+              <button 
+                @click="executeDelete"
+                class="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors"
+                :disabled="studyStore.loading"
+              >
+                {{ studyStore.loading ? '删除中...' : '确认删除' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>

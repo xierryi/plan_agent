@@ -89,6 +89,21 @@ class DataManager:
         all_data = self.load_all_data()
         return next((d for d in all_data if d['date'] == date), None)
     
+    def delete_record(self, date: str) -> bool:
+        """删除指定日期的记录"""
+        try:
+            all_data = self.load_all_data()
+            original_len = len(all_data)
+            all_data = [d for d in all_data if d['date'] != date]
+            
+            if len(all_data) == original_len:
+                return False  # 没有找到要删除的记录
+            
+            return self.save_all_data(all_data)
+        except Exception as e:
+            logger.error(f"删除记录失败: {e}")
+            return False
+    
     def get_subject_stats(self, data: List[Dict]) -> Dict[str, Dict]:
         """统计各学科数据"""
         stats = {}

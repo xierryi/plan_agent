@@ -39,6 +39,7 @@ export default {
   saveDailyRecord: (data) => instance.post('/records', data),
   getHistory: (days = 30) => instance.get(`/records?days=${days}`),
   getRecordByDate: (date) => instance.get(`/records/${date}`),
+  deleteRecord: (date) => instance.delete(`/records/${date}`),
   
   // 统计分析
   getWeeklyStats: () => instance.get('/stats/weekly'),

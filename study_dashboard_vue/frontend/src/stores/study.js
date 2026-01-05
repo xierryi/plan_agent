@@ -119,6 +119,22 @@ export const useStudyStore = defineStore('study', () => {
     }
   }
 
+  async function deleteRecord(date) {
+    loading.value = true
+    try {
+      await api.deleteRecord(date)
+      // 从本地数据中移除
+      historyData.value = historyData.value.filter(d => d.date !== date)
+      return true
+    } catch (e) {
+      error.value = e.message
+      console.error('删除记录失败:', e)
+      return false
+    } finally {
+      loading.value = false
+    }
+  }
+
   function addTask() {
     const lastTask = plannedTasks.value[plannedTasks.value.length - 1]
     const startHour = lastTask ? parseInt(lastTask.planned_end_time.split(':')[0]) : 9
@@ -221,6 +237,7 @@ export const useStudyStore = defineStore('study', () => {
     saveDailyRecord,
     loadWeeklyStats,
     loadHistory,
+    deleteRecord,
     addTask,
     removeTask,
     updateTask,
