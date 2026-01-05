@@ -444,17 +444,31 @@ const dateStatus = computed(() => {
           <div class="grid grid-cols-4 gap-1.5 lg:gap-4">
             <div>
               <label class="label text-xs lg:text-sm">难度</label>
+              <!-- 移动端数字选择 -->
               <select 
                 v-model.number="task.difficulty" 
-                class="input text-sm px-1.5"
+                class="lg:hidden input text-sm px-1.5"
                 :disabled="studyStore.tasksConfirmed"
                 @change="cacheData"
               >
-                <option :value="1">⭐</option>
-                <option :value="2">⭐⭐</option>
-                <option :value="3">⭐⭐⭐</option>
-                <option :value="4">⭐⭐⭐⭐</option>
-                <option :value="5">⭐⭐⭐⭐⭐</option>
+                <option :value="1">1</option>
+                <option :value="2">2</option>
+                <option :value="3">3</option>
+                <option :value="4">4</option>
+                <option :value="5">5</option>
+              </select>
+              <!-- 桌面端星星选择 -->
+              <select 
+                v-model.number="task.difficulty" 
+                class="hidden lg:block input text-sm"
+                :disabled="studyStore.tasksConfirmed"
+                @change="cacheData"
+              >
+                <option :value="1">⭐ 简单</option>
+                <option :value="2">⭐⭐ 较易</option>
+                <option :value="3">⭐⭐⭐ 中等</option>
+                <option :value="4">⭐⭐⭐⭐ 较难</option>
+                <option :value="5">⭐⭐⭐⭐⭐ 困难</option>
               </select>
             </div>
             <div>
