@@ -16,6 +16,7 @@ const cacheData = () => {
     plannedTasks: studyStore.plannedTasks,
     actualExecution: studyStore.actualExecution,
     tasksConfirmed: studyStore.tasksConfirmed,
+    tasksSaved: studyStore.tasksSaved,  // 保存状态标记
     reflection: studyStore.reflection,
     timestamp: Date.now()
   }
@@ -23,7 +24,7 @@ const cacheData = () => {
 }
 
 // 从缓存恢复数据
-const restoreFromCache = () => {
+const restoreFromCache = async () => {
   try {
     const cached = localStorage.getItem(CACHE_KEY)
     if (!cached) return false
@@ -34,7 +35,22 @@ const restoreFromCache = () => {
     const isToday = cacheObj.date === studyStore.currentDate
     const isRecent = Date.now() - cacheObj.timestamp < 24 * 60 * 60 * 1000
     
-    if (isToday && isRecent && !studyStore.tasksSaved) {
+    if (!isToday || !isRecent) {
+      // 缓存过期或不是今天的，清除
+      localStorage.removeItem(CACHE_KEY)
+      return false
+    }
+    
+    // 检查缓存中是否有 tasksSaved 标记
+    // 如果缓存显示已保存，但后端没有记录，说明记录被其他设备删除了
+    if (cacheObj.tasksSaved && !studyStore.tasksSaved) {
+      // 记录已被删除，清除本地缓存
+      console.log('记录已被删除，清除本地缓存')
+      localStorage.removeItem(CACHE_KEY)
+      return false
+    }
+    
+    if (!studyStore.tasksSaved) {
       // 恢复数据
       studyStore.weather = cacheObj.weather || '晴'
       studyStore.energyLevel = cacheObj.energyLevel || 7
