@@ -251,21 +251,21 @@ const dateStatus = computed(() => {
 </script>
 
 <template>
-  <div class="space-y-8">
+  <div class="space-y-4 lg:space-y-8">
     <!-- 页面标题 -->
-    <div class="flex items-center justify-between animate-fade-in">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-fade-in">
       <div>
-        <h1 class="text-3xl font-bold text-white mb-2">
+        <h1 class="text-2xl lg:text-3xl font-bold text-white mb-1">
           {{ dateStatus === 'today' ? '今日记录' : dateStatus === 'future' ? '未来计划' : '历史记录' }}
         </h1>
-        <p class="text-slate-500">记录和追踪您的学习任务</p>
+        <p class="text-sm text-slate-500">记录和追踪您的学习任务</p>
       </div>
       
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2 sm:gap-4">
         <input 
           type="date" 
           v-model="selectedDate"
-          class="input w-auto"
+          class="input w-auto text-sm"
         />
         <span 
           :class="[
@@ -282,19 +282,19 @@ const dateStatus = computed(() => {
 
     <!-- 基本信息 -->
     <div class="card animate-fade-in delay-100">
-      <h3 class="text-lg font-semibold text-white mb-4">📋 基本信息</h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <h3 class="text-base lg:text-lg font-semibold text-white mb-4">📋 基本信息</h3>
+      <div class="grid grid-cols-2 gap-4 lg:gap-6">
         <div>
-          <label class="label">天气</label>
-          <select v-model="studyStore.weather" class="input" @change="cacheData">
+          <label class="label text-xs lg:text-sm">天气</label>
+          <select v-model="studyStore.weather" class="input text-sm" @change="cacheData">
             <option v-for="w in weatherOptions" :key="w" :value="w.split(' ')[1]">
               {{ w }}
             </option>
           </select>
         </div>
         <div>
-          <label class="label">精力水平</label>
-          <div class="flex items-center gap-4">
+          <label class="label text-xs lg:text-sm">精力水平</label>
+          <div class="flex items-center gap-2 lg:gap-4">
             <input 
               type="range" 
               v-model.number="studyStore.energyLevel"
@@ -303,7 +303,7 @@ const dateStatus = computed(() => {
               class="flex-1 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
               @input="cacheData"
             />
-            <span class="text-2xl font-bold text-primary-400 w-12 text-center">
+            <span class="text-xl lg:text-2xl font-bold text-primary-400 w-8 lg:w-12 text-center">
               {{ studyStore.energyLevel }}
             </span>
           </div>
@@ -404,73 +404,75 @@ const dateStatus = computed(() => {
             </button>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="lg:col-span-2">
-              <label class="label">任务名称</label>
+          <div class="space-y-3">
+            <div>
+              <label class="label text-xs lg:text-sm">任务名称</label>
               <input 
                 type="text"
                 v-model="task.task_name"
-                class="input"
+                class="input text-sm"
                 placeholder="输入任务名称..."
                 :disabled="studyStore.tasksConfirmed"
                 @input="cacheData"
               />
             </div>
             
-            <div>
-              <label class="label">学科</label>
-              <select 
-                v-model="task.subject" 
-                class="input"
-                :disabled="studyStore.tasksConfirmed"
-                @change="cacheData"
-              >
-                <option v-for="s in subjects" :key="s.value" :value="s.value">
-                  {{ s.icon }} {{ s.label }}
-                </option>
-              </select>
-            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="label text-xs lg:text-sm">学科</label>
+                <select 
+                  v-model="task.subject" 
+                  class="input text-sm"
+                  :disabled="studyStore.tasksConfirmed"
+                  @change="cacheData"
+                >
+                  <option v-for="s in subjects" :key="s.value" :value="s.value">
+                    {{ s.icon }} {{ s.label }}
+                  </option>
+                </select>
+              </div>
 
-            <div>
-              <label class="label">难度</label>
-              <select 
-                v-model.number="task.difficulty" 
-                class="input"
-                :disabled="studyStore.tasksConfirmed"
-                @change="cacheData"
-              >
-                <option :value="1">⭐ 简单</option>
-                <option :value="2">⭐⭐ 较易</option>
-                <option :value="3">⭐⭐⭐ 中等</option>
-                <option :value="4">⭐⭐⭐⭐ 较难</option>
-                <option :value="5">⭐⭐⭐⭐⭐ 困难</option>
-              </select>
+              <div>
+                <label class="label text-xs lg:text-sm">难度</label>
+                <select 
+                  v-model.number="task.difficulty" 
+                  class="input text-sm"
+                  :disabled="studyStore.tasksConfirmed"
+                  @change="cacheData"
+                >
+                  <option :value="1">⭐ 简单</option>
+                  <option :value="2">⭐⭐ 较易</option>
+                  <option :value="3">⭐⭐⭐ 中等</option>
+                  <option :value="4">⭐⭐⭐⭐ 较难</option>
+                  <option :value="5">⭐⭐⭐⭐⭐ 困难</option>
+                </select>
+              </div>
             </div>
           </div>
 
-          <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div class="grid grid-cols-3 gap-2 lg:gap-4">
             <div>
-              <label class="label">开始时间</label>
+              <label class="label text-xs lg:text-sm">开始</label>
               <input 
                 type="time"
                 v-model="task.planned_start_time"
-                class="input"
+                class="input text-sm"
                 :disabled="studyStore.tasksConfirmed"
                 @change="studyStore.updateTask(index, { planned_start_time: task.planned_start_time }); cacheData()"
               />
             </div>
             <div>
-              <label class="label">结束时间</label>
+              <label class="label text-xs lg:text-sm">结束</label>
               <input 
                 type="time"
                 v-model="task.planned_end_time"
-                class="input"
+                class="input text-sm"
                 :disabled="studyStore.tasksConfirmed"
                 @change="studyStore.updateTask(index, { planned_end_time: task.planned_end_time }); cacheData()"
               />
             </div>
             <div class="flex items-end">
-              <div class="px-4 py-3 bg-primary-500/20 rounded-xl text-primary-400 font-medium w-full text-center">
+              <div class="px-2 lg:px-4 py-3 bg-primary-500/20 rounded-xl text-primary-400 font-medium w-full text-center text-xs lg:text-sm">
                 {{ formatDuration(task.planned_duration) }}
               </div>
             </div>

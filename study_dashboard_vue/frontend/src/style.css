@@ -34,7 +34,7 @@
 }
 
 .card {
-    @apply bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-2xl p-6
+    @apply bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-xl lg:rounded-2xl p-4 lg:p-6
            shadow-xl shadow-black/20;
   }
   
@@ -44,14 +44,14 @@
 }
 
   .input {
-    @apply w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl
+    @apply w-full px-3 lg:px-4 py-2 lg:py-3 bg-slate-800/50 border border-slate-700 rounded-lg lg:rounded-xl
            text-slate-100 placeholder-slate-500
            focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
            transition-all duration-200;
   }
   
   .label {
-    @apply block text-sm font-medium text-slate-400 mb-2;
+    @apply block text-sm font-medium text-slate-400 mb-1 lg:mb-2;
   }
 
   .nav-item {

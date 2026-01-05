@@ -8,10 +8,10 @@ const router = useRouter()
 const studyStore = useStudyStore()
 
 const navItems = [
-  { path: '/', icon: '📊', label: '数据看板' },
-  { path: '/today', icon: '📝', label: '今日记录' },
-  { path: '/ai-assistant', icon: '🤖', label: 'AI 助手' },
-  { path: '/history', icon: '📚', label: '历史数据' },
+  { path: '/', icon: '📊', label: '看板' },
+  { path: '/today', icon: '📝', label: '记录' },
+  { path: '/ai-assistant', icon: '🤖', label: 'AI' },
+  { path: '/history', icon: '📚', label: '历史' },
   { path: '/settings', icon: '⚙️', label: '设置' }
 ]
 
@@ -30,7 +30,8 @@ const currentDateFormatted = computed(() => {
 </script>
 
 <template>
-  <aside class="fixed left-0 top-0 h-screen w-64 bg-slate-900/80 backdrop-blur-xl border-r border-slate-800 flex flex-col z-50">
+  <!-- 桌面端侧边栏 -->
+  <aside class="hidden lg:flex fixed left-0 top-0 h-screen w-64 bg-slate-900/80 backdrop-blur-xl border-r border-slate-800 flex-col z-50">
     <!-- Logo -->
     <div class="p-6 border-b border-slate-800">
       <div class="flex items-center gap-3">
@@ -81,5 +82,31 @@ const currentDateFormatted = computed(() => {
       </div>
     </div>
   </aside>
+
+  <!-- 移动端底部导航 -->
+  <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 z-50 safe-area-bottom">
+    <div class="flex justify-around items-center h-16">
+      <router-link
+        v-for="item in navItems"
+        :key="item.path"
+        :to="item.path"
+        :class="[
+          'flex flex-col items-center justify-center px-3 py-2 rounded-lg transition-all',
+          isActive(item.path) 
+            ? 'text-primary-400 bg-primary-500/10' 
+            : 'text-slate-500 hover:text-slate-300'
+        ]"
+      >
+        <span class="text-xl">{{ item.icon }}</span>
+        <span class="text-xs mt-1">{{ item.label }}</span>
+      </router-link>
+    </div>
+  </nav>
 </template>
+
+<style scoped>
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+</style>
 
