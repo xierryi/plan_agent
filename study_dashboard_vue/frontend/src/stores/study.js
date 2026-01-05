@@ -126,7 +126,19 @@ export const useStudyStore = defineStore('study', () => {
       // 从本地数据中移除
       historyData.value = historyData.value.filter(d => d.date !== date)
       
-      // 如果删除的是当前日期的记录，重置状态
+      // 清除该日期的后端状态缓存
+      await api.saveState({
+        date: date,
+        planned_tasks: [],
+        actual_execution: [],
+        tasks_confirmed: false,
+        tasks_saved: false,
+        weather: '晴',
+        energy_level: 7,
+        reflection: ''
+      })
+      
+      // 如果删除的是当前显示的日期，重置本地状态
       if (date === currentDate.value) {
         plannedTasks.value = []
         actualExecution.value = []
@@ -135,19 +147,12 @@ export const useStudyStore = defineStore('study', () => {
         weather.value = '晴'
         energyLevel.value = 7
         reflection.value = ''
-        // 清除本地缓存
+      }
+      
+      // 清除本地缓存（无论哪天）
+      const today = new Date().toISOString().split('T')[0]
+      if (date === today) {
         localStorage.removeItem('study_today_cache')
-        // 同步重置状态到后端
-        await api.saveState({
-          date: currentDate.value,
-          planned_tasks: [],
-          actual_execution: [],
-          tasks_confirmed: false,
-          tasks_saved: false,
-          weather: '晴',
-          energy_level: 7,
-          reflection: ''
-        })
       }
       
       return true
