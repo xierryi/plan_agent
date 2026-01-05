@@ -172,6 +172,9 @@ async def delete_record(date: str):
     try:
         success = data_manager.delete_record(date)
         if success:
+            # 同时清除状态缓存
+            if date in state_cache:
+                del state_cache[date]
             return {"success": True, "message": f"已删除 {date} 的记录"}
         raise HTTPException(status_code=404, detail="记录不存在")
     except HTTPException:
