@@ -6,10 +6,16 @@ const studyStore = useStudyStore()
 
 const selectedDate = ref(null)
 const selectedRecord = ref(null)
+const daysToLoad = ref(365)
 
 onMounted(() => {
-  studyStore.loadHistory(30)
+  studyStore.loadHistory(daysToLoad.value)
 })
+
+const reloadHistory = (days) => {
+  daysToLoad.value = days
+  studyStore.loadHistory(days)
+}
 
 const sortedHistory = computed(() => {
   return [...studyStore.historyData].sort((a, b) => 
@@ -63,7 +69,19 @@ const formatDate = (dateStr) => {
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- 日期列表 -->
       <div class="card animate-fade-in delay-100">
-        <h3 class="text-lg font-semibold text-white mb-4">📅 选择日期</h3>
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-white">📅 选择日期</h3>
+          <select 
+            v-model="daysToLoad" 
+            @change="reloadHistory(daysToLoad)"
+            class="px-3 py-1 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-300"
+          >
+            <option :value="30">最近30天</option>
+            <option :value="90">最近3个月</option>
+            <option :value="180">最近半年</option>
+            <option :value="365">最近一年</option>
+          </select>
+        </div>
         
         <div v-if="sortedHistory.length > 0" class="space-y-2 max-h-[600px] overflow-y-auto pr-2">
           <button
