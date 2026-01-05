@@ -1,0 +1,122 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 自定义基础样式 */
+@layer base {
+  body {
+    @apply bg-slate-950 text-slate-100 antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-semibold;
+  }
+}
+
+/* 自定义组件样式 */
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 
+           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900;
+  }
+  
+  .btn-primary {
+    @apply btn bg-gradient-to-r from-primary-500 to-accent-500 text-white 
+           hover:from-primary-400 hover:to-accent-400 focus:ring-primary-500
+           shadow-lg shadow-primary-500/25;
+  }
+  
+  .btn-secondary {
+    @apply btn bg-slate-800 text-slate-100 border border-slate-700
+           hover:bg-slate-700 focus:ring-slate-500;
+  }
+  
+  .card {
+    @apply bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-2xl p-6
+           shadow-xl shadow-black/20;
+  }
+  
+  .card-hover {
+    @apply card transition-all duration-300 hover:border-slate-700 
+           hover:shadow-2xl hover:shadow-primary-500/10 hover:-translate-y-1;
+  }
+  
+  .input {
+    @apply w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl
+           text-slate-100 placeholder-slate-500
+           focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
+           transition-all duration-200;
+  }
+  
+  .label {
+    @apply block text-sm font-medium text-slate-400 mb-2;
+  }
+
+  .nav-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 
+           hover:text-white hover:bg-slate-800/50 transition-all duration-200;
+  }
+  
+  .nav-item.active {
+    @apply text-white bg-gradient-to-r from-primary-500/20 to-accent-500/20 
+           border border-primary-500/30;
+  }
+
+  .stat-card {
+    @apply card text-center;
+  }
+  
+  .stat-value {
+    @apply text-3xl font-bold bg-gradient-to-r from-primary-400 to-accent-400 
+           bg-clip-text text-transparent;
+  }
+  
+  .stat-label {
+    @apply text-sm text-slate-500 mt-1;
+  }
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-slate-900;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-700 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-600;
+}
+
+/* 动画 */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out forwards;
+}
+
+/* 延迟动画 */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }

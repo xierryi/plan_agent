@@ -1,0 +1,36 @@
+# 依赖
+frontend/node_modules/
+backend/venv/
+
+# 构建输出
+frontend/dist/
+
+# 缓存
+__pycache__/
+*.pyc
+*.pyo
+.cache/
+
+# 环境变量
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 日志
+*.log
+npm-debug.log*
+
+# 本地数据
+*.pkl
+study_data.json
+
