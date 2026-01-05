@@ -7,51 +7,51 @@
 /* 自定义基础样式 */
 @layer base {
   body {
-    @apply bg-slate-950 text-slate-100 antialiased;
+    @apply bg-slate-950 text-slate-100 antialiased text-sm lg:text-base;
   }
   
   h1, h2, h3, h4, h5, h6 {
     @apply font-display font-semibold;
-}
+  }
 }
 
 /* 自定义组件样式 */
 @layer components {
   .btn {
-    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 
+    @apply px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg font-medium transition-all duration-200 text-sm
            focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900;
-}
+  }
 
   .btn-primary {
     @apply btn bg-gradient-to-r from-primary-500 to-accent-500 text-white 
            hover:from-primary-400 hover:to-accent-400 focus:ring-primary-500
            shadow-lg shadow-primary-500/25;
-}
+  }
   
   .btn-secondary {
     @apply btn bg-slate-800 text-slate-100 border border-slate-700
            hover:bg-slate-700 focus:ring-slate-500;
-}
+  }
 
-.card {
-    @apply bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-xl lg:rounded-2xl p-4 lg:p-6
+  .card {
+    @apply bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-xl lg:rounded-2xl p-3 lg:p-6
            shadow-xl shadow-black/20;
   }
   
   .card-hover {
     @apply card transition-all duration-300 hover:border-slate-700 
            hover:shadow-2xl hover:shadow-primary-500/10 hover:-translate-y-1;
-}
+  }
 
   .input {
-    @apply w-full px-3 lg:px-4 py-2 lg:py-3 bg-slate-800/50 border border-slate-700 rounded-lg lg:rounded-xl
-           text-slate-100 placeholder-slate-500
+    @apply w-full px-2.5 lg:px-4 py-1.5 lg:py-3 bg-slate-800/50 border border-slate-700 rounded-lg lg:rounded-xl
+           text-sm text-slate-100 placeholder-slate-500
            focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
            transition-all duration-200;
   }
   
   .label {
-    @apply block text-sm font-medium text-slate-400 mb-1 lg:mb-2;
+    @apply block text-xs lg:text-sm font-medium text-slate-400 mb-0.5 lg:mb-2;
   }
 
   .nav-item {

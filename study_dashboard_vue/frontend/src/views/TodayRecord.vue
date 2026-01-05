@@ -259,7 +259,7 @@ const dateStatus = computed(() => {
 </script>
 
 <template>
-  <div class="space-y-4 lg:space-y-8">
+  <div class="space-y-3 lg:space-y-8">
     <!-- 页面标题 -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-fade-in">
       <div>
@@ -395,11 +395,11 @@ const dateStatus = computed(() => {
       </div>
 
       <!-- 任务列表（未折叠时显示） -->
-      <div v-if="studyStore.plannedTasks.length > 0 && !isPlanCollapsed" class="space-y-4">
+      <div v-if="studyStore.plannedTasks.length > 0 && !isPlanCollapsed" class="space-y-2 lg:space-y-4">
         <div 
           v-for="(task, index) in studyStore.plannedTasks" 
           :key="task.task_id"
-          class="p-4 bg-slate-800/50 rounded-xl border border-slate-700 space-y-4"
+          class="p-2.5 lg:p-4 bg-slate-800/50 rounded-lg lg:rounded-xl border border-slate-700 space-y-2 lg:space-y-4"
         >
           <div class="flex items-center justify-between">
             <span class="text-sm text-slate-500">任务 {{ index + 1 }}</span>
@@ -524,15 +524,15 @@ const dateStatus = computed(() => {
 
     <!-- 实际执行（确认后显示） -->
     <div id="actual-execution" v-if="studyStore.tasksConfirmed" class="card animate-fade-in">
-      <h3 class="text-lg font-semibold text-white mb-6">✅ 实际执行</h3>
+      <h3 class="text-base lg:text-lg font-semibold text-white mb-3 lg:mb-6">✅ 实际执行</h3>
       
-      <div class="space-y-4">
+      <div class="space-y-2 lg:space-y-4">
         <div 
           v-for="(item, idx) in sortedActualExecution" 
           :key="item.task_id"
-          class="p-4 bg-slate-800/50 rounded-xl border border-slate-700"
+          class="p-2.5 lg:p-4 bg-slate-800/50 rounded-lg lg:rounded-xl border border-slate-700"
         >
-          <div class="flex items-center gap-4 mb-4">
+          <div class="flex items-center gap-2 lg:gap-4 mb-2 lg:mb-4">
             <div class="flex-1">
               <label class="label">实际任务名称</label>
               <input 

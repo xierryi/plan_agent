@@ -9,7 +9,7 @@ import Sidebar from './components/Sidebar.vue'
     <Sidebar />
     
     <!-- 主内容区 -->
-    <main class="lg:ml-64 p-4 lg:p-8 pb-24 lg:pb-8">
+    <main class="lg:ml-64 p-2 lg:p-8 pb-20 lg:pb-8">
       <div class="max-w-7xl mx-auto">
         <RouterView v-slot="{ Component }">
           <transition name="fade" mode="out-in">
