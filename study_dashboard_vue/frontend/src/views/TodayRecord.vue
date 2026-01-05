@@ -100,6 +100,9 @@ watch(selectedDate, (newDate) => {
   studyStore.setDate(newDate)
 })
 
+// 计划任务折叠状态
+const isPlanCollapsed = ref(false)
+
 // 时间格式化
 const formatDuration = (minutes) => {
   if (minutes < 60) return `${minutes}分钟`
@@ -268,12 +271,26 @@ const dateStatus = computed(() => {
     <!-- 计划任务 -->
     <div class="card animate-fade-in delay-200">
       <div class="flex items-center justify-between mb-6">
-        <h3 class="text-lg font-semibold text-white">📝 计划任务</h3>
+        <div class="flex items-center gap-3">
+          <!-- 折叠按钮（确认后显示） -->
+          <button 
+            v-if="studyStore.tasksConfirmed"
+            @click="isPlanCollapsed = !isPlanCollapsed"
+            class="text-slate-400 hover:text-white transition-colors"
+          >
+            <span :class="['inline-block transition-transform', isPlanCollapsed ? '' : 'rotate-90']">▶</span>
+          </button>
+          <h3 class="text-lg font-semibold text-white">📝 计划任务</h3>
+          <span v-if="studyStore.tasksConfirmed" class="px-2 py-1 bg-emerald-500/20 text-emerald-400 text-xs rounded-full">
+            已确认
+          </span>
+        </div>
         <div class="flex gap-2">
           <button 
             @click="studyStore.addTask"
             class="btn-secondary text-sm"
             :disabled="studyStore.tasksConfirmed"
+            v-if="!studyStore.tasksConfirmed"
           >
             ➕ 添加任务
           </button>
@@ -288,8 +305,46 @@ const dateStatus = computed(() => {
         </div>
       </div>
 
-      <!-- 任务列表 -->
-      <div v-if="studyStore.plannedTasks.length > 0" class="space-y-4">
+      <!-- 确认后的计划表格（简洁视图） -->
+      <div v-if="studyStore.tasksConfirmed && isPlanCollapsed" class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-slate-700">
+              <th class="text-left py-3 px-4 text-slate-400 font-medium">#</th>
+              <th class="text-left py-3 px-4 text-slate-400 font-medium">任务</th>
+              <th class="text-left py-3 px-4 text-slate-400 font-medium">学科</th>
+              <th class="text-left py-3 px-4 text-slate-400 font-medium">时间</th>
+              <th class="text-left py-3 px-4 text-slate-400 font-medium">时长</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr 
+              v-for="(task, index) in studyStore.plannedTasks" 
+              :key="task.task_id"
+              class="border-b border-slate-800 hover:bg-slate-800/30"
+            >
+              <td class="py-3 px-4 text-slate-500">{{ index + 1 }}</td>
+              <td class="py-3 px-4 text-white font-medium">{{ task.task_name }}</td>
+              <td class="py-3 px-4">
+                <span class="px-2 py-1 bg-slate-800 rounded text-slate-300 text-xs">
+                  {{ subjects.find(s => s.value === task.subject)?.icon }} {{ subjects.find(s => s.value === task.subject)?.label }}
+                </span>
+              </td>
+              <td class="py-3 px-4 text-slate-300">{{ task.planned_start_time }} - {{ task.planned_end_time }}</td>
+              <td class="py-3 px-4 text-primary-400 font-medium">{{ formatDuration(task.planned_duration) }}</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr class="bg-slate-800/30">
+              <td colspan="4" class="py-3 px-4 text-right text-slate-400">总计划时间：</td>
+              <td class="py-3 px-4 text-primary-400 font-bold">{{ formatDuration(studyStore.totalPlannedMinutes) }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- 任务列表（未折叠时显示） -->
+      <div v-if="studyStore.plannedTasks.length > 0 && !isPlanCollapsed" class="space-y-4">
         <div 
           v-for="(task, index) in studyStore.plannedTasks" 
           :key="task.task_id"
@@ -405,7 +460,7 @@ const dateStatus = computed(() => {
       </div>
 
       <!-- 空状态 -->
-      <div v-else class="text-center py-12 text-slate-500">
+      <div v-if="studyStore.plannedTasks.length === 0 && !studyStore.tasksConfirmed" class="text-center py-12 text-slate-500">
         <div class="text-4xl mb-4">📋</div>
         <p>还没有添加任务</p>
         <button @click="studyStore.addTask" class="btn-primary mt-4">
