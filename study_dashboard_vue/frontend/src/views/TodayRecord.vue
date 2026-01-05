@@ -183,6 +183,8 @@ const handleConfirmTasks = () => {
   }
   
   studyStore.confirmTasks()
+  // 确认后自动折叠显示表格
+  isPlanCollapsed.value = true
 }
 
 // 保存记录
