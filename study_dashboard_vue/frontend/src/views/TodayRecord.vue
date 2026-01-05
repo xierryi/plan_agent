@@ -377,10 +377,11 @@ const dateStatus = computed(() => {
         <table class="w-full text-xs lg:text-sm">
           <thead>
             <tr class="border-b border-slate-700">
-              <th class="text-left py-1.5 lg:py-3 px-2 lg:px-4 text-slate-400 font-medium">任务</th>
+              <th class="text-left py-1.5 lg:py-3 pl-1 pr-1 lg:px-4 text-slate-400 font-medium w-6 lg:w-auto">#</th>
+              <th class="text-left py-1.5 lg:py-3 pl-2 pr-1 lg:px-4 text-slate-400 font-medium">任务</th>
               <th class="text-left py-1.5 lg:py-3 px-2 lg:px-4 text-slate-400 font-medium hidden sm:table-cell">学科</th>
-              <th class="text-left py-1.5 lg:py-3 px-2 lg:px-4 text-slate-400 font-medium">时间</th>
-              <th class="text-left py-1.5 lg:py-3 px-2 lg:px-4 text-slate-400 font-medium">时长</th>
+              <th class="text-left py-1.5 lg:py-3 pl-2 pr-1 lg:px-4 text-slate-400 font-medium whitespace-nowrap">时间</th>
+              <th class="text-right py-1.5 lg:py-3 pl-1 pr-2 lg:px-4 text-slate-400 font-medium whitespace-nowrap">时长</th>
             </tr>
           </thead>
           <tbody>
@@ -389,21 +390,22 @@ const dateStatus = computed(() => {
               :key="task.task_id"
               class="border-b border-slate-800 hover:bg-slate-800/30"
             >
-              <td class="py-1.5 lg:py-3 px-2 lg:px-4 text-white font-medium">{{ task.task_name }}</td>
+              <td class="py-1.5 lg:py-3 pl-1 pr-1 lg:px-4 text-slate-500">{{ idx + 1 }}</td>
+              <td class="py-1.5 lg:py-3 pl-2 pr-1 lg:px-4 text-white font-medium">{{ task.task_name }}</td>
               <td class="py-1.5 lg:py-3 px-2 lg:px-4 hidden sm:table-cell">
                 <span class="px-1.5 py-0.5 bg-slate-800 rounded text-slate-300 text-xs">
                   {{ subjects.find(s => s.value === task.subject)?.icon }}
                 </span>
               </td>
-              <td class="py-1.5 lg:py-3 px-2 lg:px-4 text-slate-300">{{ task.planned_start_time }}-{{ task.planned_end_time }}</td>
-              <td class="py-1.5 lg:py-3 px-2 lg:px-4 text-primary-400 font-medium">{{ formatDuration(task.planned_duration) }}</td>
+              <td class="py-1.5 lg:py-3 pl-2 pr-1 lg:px-4 text-slate-300 whitespace-nowrap">{{ task.planned_start_time }}-{{ task.planned_end_time }}</td>
+              <td class="py-1.5 lg:py-3 pl-1 pr-2 lg:px-4 text-primary-400 font-medium text-right whitespace-nowrap">{{ formatDuration(task.planned_duration) }}</td>
             </tr>
           </tbody>
           <tfoot>
             <tr class="bg-slate-800/30">
-              <td colspan="2" class="sm:hidden py-1.5 px-2 text-right text-slate-400 text-xs">总计：</td>
-              <td colspan="3" class="hidden sm:table-cell py-1.5 lg:py-3 px-2 lg:px-4 text-right text-slate-400">总计划时间：</td>
-              <td class="py-1.5 lg:py-3 px-2 lg:px-4 text-primary-400 font-bold">{{ formatDuration(studyStore.totalPlannedMinutes) }}</td>
+              <td colspan="3" class="sm:hidden py-1.5 px-1 text-right text-slate-400 text-xs">总计：</td>
+              <td colspan="4" class="hidden sm:table-cell py-1.5 lg:py-3 px-2 lg:px-4 text-right text-slate-400">总计划时间：</td>
+              <td class="py-1.5 lg:py-3 pl-1 pr-2 lg:px-4 text-primary-400 font-bold text-right whitespace-nowrap">{{ formatDuration(studyStore.totalPlannedMinutes) }}</td>
             </tr>
           </tfoot>
         </table>
