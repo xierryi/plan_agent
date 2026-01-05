@@ -163,7 +163,10 @@ const timeConflicts = computed(() => {
 // 是否有时间冲突
 const hasConflicts = computed(() => timeConflicts.value.length > 0)
 
-// 确认任务
+// 确认计划弹窗
+const showConfirmPlanDialog = ref(false)
+
+// 点击确认计划按钮
 const handleConfirmTasks = () => {
   if (studyStore.plannedTasks.length === 0) {
     alert('请至少添加一个任务')
@@ -182,9 +185,21 @@ const handleConfirmTasks = () => {
     return
   }
   
+  // 显示确认弹窗
+  showConfirmPlanDialog.value = true
+}
+
+// 最终确认计划
+const executeConfirmPlan = () => {
   studyStore.confirmTasks()
   // 确认后自动折叠显示表格
   isPlanCollapsed.value = true
+  showConfirmPlanDialog.value = false
+}
+
+// 取消确认
+const cancelConfirmPlan = () => {
+  showConfirmPlanDialog.value = false
 }
 
 // 保存记录
@@ -580,6 +595,73 @@ const dateStatus = computed(() => {
         </div>
       </div>
     </div>
+
+    <!-- 确认计划弹窗 -->
+    <Teleport to="body">
+      <div 
+        v-if="showConfirmPlanDialog" 
+        class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
+        @click="cancelConfirmPlan"
+      >
+        <div 
+          class="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-lg mx-4 shadow-2xl"
+          @click.stop
+        >
+          <div class="text-center mb-6">
+            <div class="text-5xl mb-4">📋</div>
+            <h3 class="text-xl font-semibold text-white mb-2">确认今日计划</h3>
+            <p class="text-slate-400">
+              确认后将锁定计划，开始记录实际执行情况
+            </p>
+          </div>
+
+          <!-- 计划预览表格 -->
+          <div class="bg-slate-800/50 rounded-xl p-4 mb-6 max-h-60 overflow-y-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-slate-700">
+                  <th class="text-left py-2 px-2 text-slate-400 font-medium">任务</th>
+                  <th class="text-left py-2 px-2 text-slate-400 font-medium">时间</th>
+                  <th class="text-right py-2 px-2 text-slate-400 font-medium">时长</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr 
+                  v-for="task in studyStore.plannedTasks" 
+                  :key="task.task_id"
+                  class="border-b border-slate-700/50"
+                >
+                  <td class="py-2 px-2 text-white">{{ task.task_name }}</td>
+                  <td class="py-2 px-2 text-slate-300">{{ task.planned_start_time }} - {{ task.planned_end_time }}</td>
+                  <td class="py-2 px-2 text-primary-400 text-right">{{ formatDuration(task.planned_duration) }}</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr class="bg-slate-800/30">
+                  <td colspan="2" class="py-2 px-2 text-right text-slate-400 font-medium">总计：</td>
+                  <td class="py-2 px-2 text-primary-400 font-bold text-right">{{ formatDuration(studyStore.totalPlannedMinutes) }}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <div class="flex gap-3">
+            <button 
+              @click="cancelConfirmPlan"
+              class="flex-1 btn-secondary"
+            >
+              返回修改
+            </button>
+            <button 
+              @click="executeConfirmPlan"
+              class="flex-1 btn-primary"
+            >
+              ✅ 确认计划
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
