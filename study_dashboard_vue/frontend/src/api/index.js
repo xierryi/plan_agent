@@ -1,6 +1,17 @@
 import axios from 'axios'
 
-const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+// 自动检测 API 地址：如果是本地访问用 localhost，否则用当前 hostname
+const getApiBaseUrl = () => {
+  const hostname = window.location.hostname
+  // 如果是 localhost 或 127.0.0.1，使用 localhost
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return 'http://localhost:8000/api'
+  }
+  // 否则使用当前 hostname（支持手机访问）
+  return `http://${hostname}:8000/api`
+}
+
+const baseURL = import.meta.env.VITE_API_URL || getApiBaseUrl()
 
 const instance = axios.create({
   baseURL,
