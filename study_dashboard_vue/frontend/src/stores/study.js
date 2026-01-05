@@ -132,9 +132,22 @@ export const useStudyStore = defineStore('study', () => {
         actualExecution.value = []
         tasksConfirmed.value = false
         tasksSaved.value = false
+        weather.value = '晴'
+        energyLevel.value = 7
         reflection.value = ''
         // 清除本地缓存
         localStorage.removeItem('study_today_cache')
+        // 同步重置状态到后端
+        await api.saveState({
+          date: currentDate.value,
+          planned_tasks: [],
+          actual_execution: [],
+          tasks_confirmed: false,
+          tasks_saved: false,
+          weather: '晴',
+          energy_level: 7,
+          reflection: ''
+        })
       }
       
       return true
