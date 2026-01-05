@@ -174,6 +174,7 @@ export const useStudyStore = defineStore('study', () => {
     // 初始化实际执行数据
     actualExecution.value = plannedTasks.value.map(task => ({
       task_id: task.task_id,
+      actual_task_name: task.task_name,  // 默认使用计划任务名
       actual_start_time: task.planned_start_time,
       actual_end_time: task.planned_end_time,
       actual_duration: task.planned_duration,

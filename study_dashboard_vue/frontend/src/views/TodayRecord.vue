@@ -1,8 +1,70 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, onBeforeUnmount } from 'vue'
 import { useStudyStore } from '../stores/study'
 
 const studyStore = useStudyStore()
+
+// 本地缓存 key
+const CACHE_KEY = 'study_today_cache'
+
+// 缓存数据到 localStorage
+const cacheData = () => {
+  const cacheObj = {
+    date: studyStore.currentDate,
+    weather: studyStore.weather,
+    energyLevel: studyStore.energyLevel,
+    plannedTasks: studyStore.plannedTasks,
+    actualExecution: studyStore.actualExecution,
+    tasksConfirmed: studyStore.tasksConfirmed,
+    reflection: studyStore.reflection,
+    timestamp: Date.now()
+  }
+  localStorage.setItem(CACHE_KEY, JSON.stringify(cacheObj))
+}
+
+// 从缓存恢复数据
+const restoreFromCache = () => {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY)
+    if (!cached) return false
+    
+    const cacheObj = JSON.parse(cached)
+    
+    // 检查是否是同一天的缓存且未过期（24小时）
+    const isToday = cacheObj.date === studyStore.currentDate
+    const isRecent = Date.now() - cacheObj.timestamp < 24 * 60 * 60 * 1000
+    
+    if (isToday && isRecent && !studyStore.tasksSaved) {
+      // 恢复数据
+      studyStore.weather = cacheObj.weather || '晴'
+      studyStore.energyLevel = cacheObj.energyLevel || 7
+      
+      if (cacheObj.plannedTasks?.length > 0) {
+        studyStore.plannedTasks = cacheObj.plannedTasks
+      }
+      if (cacheObj.actualExecution?.length > 0) {
+        studyStore.actualExecution = cacheObj.actualExecution
+      }
+      if (cacheObj.tasksConfirmed) {
+        studyStore.tasksConfirmed = cacheObj.tasksConfirmed
+      }
+      if (cacheObj.reflection) {
+        studyStore.reflection = cacheObj.reflection
+      }
+      
+      console.log('已从缓存恢复数据')
+      return true
+    }
+  } catch (e) {
+    console.error('恢复缓存失败:', e)
+  }
+  return false
+}
+
+// 清除缓存
+const clearCache = () => {
+  localStorage.removeItem(CACHE_KEY)
+}
 
 const subjects = [
   { value: 'math', label: '数学', icon: '📐' },
@@ -16,6 +78,19 @@ const weatherOptions = ['☀️ 晴', '⛅ 多云', '🌧️ 雨', '☁️ 阴',
 
 onMounted(() => {
   studyStore.loadTodayState()
+  // 尝试从缓存恢复
+  setTimeout(() => {
+    if (!studyStore.tasksSaved) {
+      restoreFromCache()
+    }
+  }, 500)
+})
+
+// 页面离开前保存缓存
+onBeforeUnmount(() => {
+  if (!studyStore.tasksSaved) {
+    cacheData()
+  }
 })
 
 // 日期选择
@@ -111,6 +186,7 @@ const handleConfirmTasks = () => {
 const handleSaveRecord = async () => {
   const success = await studyStore.saveDailyRecord()
   if (success) {
+    clearCache()  // 保存成功后清除缓存
     alert('🎉 记录保存成功！')
   }
 }
@@ -164,7 +240,7 @@ const dateStatus = computed(() => {
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label class="label">天气</label>
-          <select v-model="studyStore.weather" class="input">
+          <select v-model="studyStore.weather" class="input" @change="cacheData">
             <option v-for="w in weatherOptions" :key="w" :value="w.split(' ')[1]">
               {{ w }}
             </option>
@@ -179,6 +255,7 @@ const dateStatus = computed(() => {
               min="1" 
               max="10" 
               class="flex-1 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+              @input="cacheData"
             />
             <span class="text-2xl font-bold text-primary-400 w-12 text-center">
               {{ studyStore.energyLevel }}
@@ -238,6 +315,7 @@ const dateStatus = computed(() => {
                 class="input"
                 placeholder="输入任务名称..."
                 :disabled="studyStore.tasksConfirmed"
+                @input="cacheData"
               />
             </div>
             
@@ -247,6 +325,7 @@ const dateStatus = computed(() => {
                 v-model="task.subject" 
                 class="input"
                 :disabled="studyStore.tasksConfirmed"
+                @change="cacheData"
               >
                 <option v-for="s in subjects" :key="s.value" :value="s.value">
                   {{ s.icon }} {{ s.label }}
@@ -260,6 +339,7 @@ const dateStatus = computed(() => {
                 v-model.number="task.difficulty" 
                 class="input"
                 :disabled="studyStore.tasksConfirmed"
+                @change="cacheData"
               >
                 <option :value="1">⭐ 简单</option>
                 <option :value="2">⭐⭐ 较易</option>
@@ -278,7 +358,7 @@ const dateStatus = computed(() => {
                 v-model="task.planned_start_time"
                 class="input"
                 :disabled="studyStore.tasksConfirmed"
-                @change="studyStore.updateTask(index, { planned_start_time: task.planned_start_time })"
+                @change="studyStore.updateTask(index, { planned_start_time: task.planned_start_time }); cacheData()"
               />
             </div>
             <div>
@@ -288,7 +368,7 @@ const dateStatus = computed(() => {
                 v-model="task.planned_end_time"
                 class="input"
                 :disabled="studyStore.tasksConfirmed"
-                @change="studyStore.updateTask(index, { planned_end_time: task.planned_end_time })"
+                @change="studyStore.updateTask(index, { planned_end_time: task.planned_end_time }); cacheData()"
               />
             </div>
             <div class="flex items-end">
@@ -344,21 +424,35 @@ const dateStatus = computed(() => {
           :key="exec.task_id"
           class="p-4 bg-slate-800/50 rounded-xl border border-slate-700"
         >
-          <div class="flex items-center justify-between mb-4">
-            <span class="font-medium text-white">
-              {{ studyStore.plannedTasks[index]?.task_name }}
-            </span>
-            <label class="flex items-center gap-2 cursor-pointer">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="flex-1">
+              <label class="label">实际任务名称</label>
               <input 
-                type="checkbox" 
-                v-model="exec.completed"
-                class="w-5 h-5 rounded border-slate-600 text-primary-500 focus:ring-primary-500"
+                type="text"
+                v-model="exec.actual_task_name"
+                class="input"
+                :placeholder="studyStore.plannedTasks[index]?.task_name"
                 :disabled="studyStore.tasksSaved"
+                @input="cacheData"
               />
-              <span :class="exec.completed ? 'text-emerald-400' : 'text-slate-500'">
-                {{ exec.completed ? '已完成' : '未完成' }}
-              </span>
-            </label>
+              <div v-if="exec.actual_task_name !== studyStore.plannedTasks[index]?.task_name" class="text-xs text-amber-400 mt-1">
+                原计划：{{ studyStore.plannedTasks[index]?.task_name }}
+              </div>
+            </div>
+            <div class="pt-6">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  v-model="exec.completed"
+                  class="w-5 h-5 rounded border-slate-600 text-primary-500 focus:ring-primary-500"
+                  :disabled="studyStore.tasksSaved"
+                  @change="cacheData"
+                />
+                <span :class="exec.completed ? 'text-emerald-400' : 'text-slate-500'">
+                  {{ exec.completed ? '已完成' : '未完成' }}
+                </span>
+              </label>
+            </div>
           </div>
 
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -369,7 +463,7 @@ const dateStatus = computed(() => {
                 v-model="exec.actual_start_time"
                 class="input"
                 :disabled="studyStore.tasksSaved"
-                @change="studyStore.updateExecution(index, { actual_start_time: exec.actual_start_time })"
+                @change="studyStore.updateExecution(index, { actual_start_time: exec.actual_start_time }); cacheData()"
               />
             </div>
             <div>
@@ -379,7 +473,7 @@ const dateStatus = computed(() => {
                 v-model="exec.actual_end_time"
                 class="input"
                 :disabled="studyStore.tasksSaved"
-                @change="studyStore.updateExecution(index, { actual_end_time: exec.actual_end_time })"
+                @change="studyStore.updateExecution(index, { actual_end_time: exec.actual_end_time }); cacheData()"
               />
             </div>
             <div>
@@ -388,6 +482,7 @@ const dateStatus = computed(() => {
                 v-model.number="exec.post_energy" 
                 class="input"
                 :disabled="studyStore.tasksSaved"
+                @change="cacheData"
               >
                 <option v-for="n in 10" :key="n" :value="n">{{ n }}</option>
               </select>
@@ -409,6 +504,7 @@ const dateStatus = computed(() => {
           class="input min-h-24"
           placeholder="今天的收获和改进点..."
           :disabled="studyStore.tasksSaved"
+          @input="cacheData"
         ></textarea>
       </div>
 
