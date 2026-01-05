@@ -380,7 +380,7 @@ const dateStatus = computed(() => {
               <th class="text-left py-1.5 lg:py-3 pl-1 pr-1 lg:px-4 text-slate-400 font-medium w-6 lg:w-auto">#</th>
               <th class="text-left py-1.5 lg:py-3 pl-2 pr-1 lg:px-4 text-slate-400 font-medium">任务</th>
               <th class="text-left py-1.5 lg:py-3 px-2 lg:px-4 text-slate-400 font-medium hidden sm:table-cell">学科</th>
-              <th class="text-left py-1.5 lg:py-3 pl-2 pr-1 lg:px-4 text-slate-400 font-medium whitespace-nowrap">时间</th>
+              <th class="text-center py-1.5 lg:py-3 pl-2 pr-1 lg:px-4 text-slate-400 font-medium whitespace-nowrap">时间</th>
               <th class="text-right py-1.5 lg:py-3 pl-1 pr-2 lg:px-4 text-slate-400 font-medium whitespace-nowrap">时长</th>
             </tr>
           </thead>
@@ -397,7 +397,7 @@ const dateStatus = computed(() => {
                   {{ subjects.find(s => s.value === task.subject)?.icon }}
                 </span>
               </td>
-              <td class="py-1.5 lg:py-3 pl-2 pr-1 lg:px-4 text-slate-300 whitespace-nowrap">{{ task.planned_start_time }}-{{ task.planned_end_time }}</td>
+              <td class="py-1.5 lg:py-3 pl-2 pr-1 lg:px-4 text-slate-300 text-center whitespace-nowrap">{{ task.planned_start_time }}-{{ task.planned_end_time }}</td>
               <td class="py-1.5 lg:py-3 pl-1 pr-2 lg:px-4 text-primary-400 font-medium text-right whitespace-nowrap">{{ formatDuration(task.planned_duration) }}</td>
             </tr>
           </tbody>
