@@ -1,8 +1,108 @@
 <script setup>
-import { ref, computed, onMounted, watch, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, watch, onBeforeUnmount, nextTick } from 'vue'
 import { useStudyStore } from '../stores/study'
 
 const studyStore = useStudyStore()
+
+// 任务滚动索引相关
+const showTaskIndex = ref(false)
+const currentVisibleTaskIndex = ref(1)
+const indexBarTop = ref(100) // 悬浮框的Y坐标
+const planSectionRef = ref(null)
+let scrollRAF = null // 用于requestAnimationFrame
+
+// 滚动处理的实际逻辑
+const updateScrollIndex = () => {
+  // 任务少于2个时不显示索引
+  if (isPlanCollapsed.value || studyStore.plannedTasks.length < 2) {
+    showTaskIndex.value = false
+    return
+  }
+  
+  const planSection = document.getElementById('plan-tasks')
+  if (!planSection) {
+    showTaskIndex.value = false
+    return
+  }
+  
+  // 获取所有任务元素
+  const taskElements = planSection.querySelectorAll('[data-task-index]')
+  if (taskElements.length < 2) {
+    showTaskIndex.value = false
+    return
+  }
+  
+  // 检查是否有任务卡片在屏幕内
+  let hasVisibleTask = false
+  for (let i = 0; i < taskElements.length; i++) {
+    const rect = taskElements[i].getBoundingClientRect()
+    // 如果任务的任何部分在屏幕内
+    if (rect.bottom > 0 && rect.top < window.innerHeight) {
+      hasVisibleTask = true
+      break
+    }
+  }
+  
+  showTaskIndex.value = hasVisibleTask
+  
+  if (hasVisibleTask) {
+    let currentTask = 1
+    let currentTaskElement = taskElements[0]
+    
+    // 简单逻辑：找到顶部最接近屏幕顶部（但还在屏幕内或刚滚出）的任务
+    // 从前往后遍历，找最后一个顶部已经到达屏幕上半部分的任务
+    const threshold = window.innerHeight / 2 // 屏幕中间作为阈值
+    
+    for (let i = 0; i < taskElements.length; i++) {
+      const taskRect = taskElements[i].getBoundingClientRect()
+      
+      // 如果任务顶部还没到屏幕中间，说明还没滚到这个任务，停止
+      if (taskRect.top > threshold) {
+        break
+      }
+      
+      // 如果任务还在屏幕内（底部在屏幕上方以下），更新当前任务
+      if (taskRect.bottom > 50) {
+        currentTask = parseInt(taskElements[i].dataset.taskIndex) || 1
+        currentTaskElement = taskElements[i]
+      }
+    }
+    
+    currentVisibleTaskIndex.value = currentTask
+    // 悬浮框位置用CSS固定，不需要JS计算
+  }
+}
+
+// 使用 requestAnimationFrame 优化滚动处理
+const handleScroll = () => {
+  if (scrollRAF) return // 如果已经有待处理的帧，跳过
+  scrollRAF = requestAnimationFrame(() => {
+    updateScrollIndex()
+    scrollRAF = null
+  })
+}
+
+// 点击索引跳转到对应任务
+const scrollToTask = (index) => {
+  const isLastTask = index === studyStore.plannedTasks.length
+  
+  if (isLastTask) {
+    // 最后一个任务：滚动到让"总计划时间"显示在屏幕底部
+    const totalElement = document.getElementById('plan-total')
+    if (totalElement) {
+      // 计算滚动位置：让总计元素底部对齐屏幕底部（留出底部导航栏80px）
+      const rect = totalElement.getBoundingClientRect()
+      const targetScroll = window.scrollY + rect.bottom - window.innerHeight + 100
+      window.scrollTo({ top: targetScroll, behavior: 'smooth' })
+    }
+  } else {
+    // 其他任务：滚动到屏幕中间
+    const taskElement = document.querySelector(`[data-task-index="${index}"]`)
+    if (taskElement) {
+      taskElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }
+}
 
 // 本地缓存 key
 const CACHE_KEY = 'study_today_cache'
@@ -100,6 +200,11 @@ onMounted(() => {
       restoreFromCache()
     }
   }, 500)
+  // 添加滚动事件监听（同时监听scroll和touchmove以确保移动端兼容）
+  window.addEventListener('scroll', handleScroll, { passive: true })
+  document.addEventListener('touchmove', handleScroll, { passive: true })
+  // 初始调用一次
+  setTimeout(handleScroll, 100)
 })
 
 // 页面离开前保存缓存
@@ -107,6 +212,9 @@ onBeforeUnmount(() => {
   if (!studyStore.tasksSaved) {
     cacheData()
   }
+  // 移除滚动事件监听
+  window.removeEventListener('scroll', handleScroll)
+  document.removeEventListener('touchmove', handleScroll)
 })
 
 // 日期选择
@@ -276,6 +384,28 @@ const dateStatus = computed(() => {
 
 <template>
   <div class="space-y-3 lg:space-y-8">
+    <!-- 悬浮滚动索引 - 用Teleport固定到body，确保不受父元素影响 -->
+    <Teleport to="body">
+      <div 
+        v-if="showTaskIndex && studyStore.plannedTasks.length > 1"
+        class="fixed left-0 top-1/2 -translate-y-1/2 z-[100] lg:hidden flex flex-col items-center gap-0.5 bg-slate-900/95 backdrop-blur rounded-r-lg py-2 px-1 border border-l-0 border-slate-600 shadow-lg"
+      >
+        <button
+          v-for="n in studyStore.plannedTasks.length"
+          :key="n"
+          @click="scrollToTask(n)"
+          :class="[
+            'w-6 h-6 rounded text-xs font-medium transition-all flex items-center justify-center',
+            currentVisibleTaskIndex === n 
+              ? 'bg-primary-500 text-white scale-110 shadow-lg shadow-primary-500/50' 
+              : 'text-primary-400 hover:text-primary-300 hover:bg-primary-500/20'
+          ]"
+        >
+          {{ n }}
+        </button>
+      </div>
+    </Teleport>
+
     <!-- 页面标题 -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-fade-in">
       <div>
@@ -336,7 +466,7 @@ const dateStatus = computed(() => {
     </div>
 
     <!-- 计划任务 -->
-    <div id="plan-tasks" class="card animate-fade-in delay-200">
+    <div id="plan-tasks" class="card animate-fade-in delay-200 relative">
       <div class="flex items-center justify-between mb-6">
         <div class="flex items-center gap-3">
           <!-- 折叠按钮（确认后显示） -->
@@ -411,18 +541,21 @@ const dateStatus = computed(() => {
         </table>
       </div>
 
+      <!-- 悬浮滚动索引移到Teleport中 -->
+
       <!-- 任务列表（未折叠时显示） -->
-      <div v-if="studyStore.plannedTasks.length > 0 && !isPlanCollapsed" class="space-y-2 lg:space-y-4">
+      <div v-if="studyStore.plannedTasks.length > 0 && !isPlanCollapsed" class="space-y-2 lg:space-y-4 ml-5 lg:ml-0">
         <div 
           v-for="(task, index) in studyStore.plannedTasks" 
           :key="task.task_id"
+          :data-task-index="index + 1"
           class="p-2.5 lg:p-4 bg-slate-800/50 rounded-lg lg:rounded-xl border border-slate-700 space-y-2 lg:space-y-4"
         >
           <div class="flex items-center justify-between">
             <span class="text-sm text-slate-500">任务 {{ index + 1 }}</span>
             <button 
               v-if="!studyStore.tasksConfirmed"
-              @click="studyStore.removeTask(index); cacheData()"
+              @click="studyStore.removeTask(index); cacheData(); nextTick(handleScroll)"
               class="text-red-400 hover:text-red-300 text-sm"
             >
               🗑️ 删除
@@ -458,13 +591,13 @@ const dateStatus = computed(() => {
           </div>
 
           <!-- 第二行：难度 + 开始 + 结束 + 时长 -->
-          <div class="grid grid-cols-4 gap-1.5 lg:gap-4">
+          <div class="grid grid-cols-[2fr_3fr_3fr_2fr] lg:grid-cols-4 gap-1 lg:gap-4">
             <div>
               <label class="label text-xs lg:text-sm">难度</label>
               <!-- 移动端数字选择 -->
               <select 
                 v-model.number="task.difficulty" 
-                class="lg:hidden input text-sm px-1.5"
+                class="lg:hidden input text-sm px-1"
                 :disabled="studyStore.tasksConfirmed"
                 @change="cacheData"
               >
@@ -493,7 +626,7 @@ const dateStatus = computed(() => {
               <input 
                 type="time"
                 v-model="task.planned_start_time"
-                class="input text-sm px-1"
+                class="input text-sm px-0.5"
                 :disabled="studyStore.tasksConfirmed"
                 @change="studyStore.updateTask(index, { planned_start_time: task.planned_start_time }); cacheData()"
               />
@@ -503,14 +636,14 @@ const dateStatus = computed(() => {
               <input 
                 type="time"
                 v-model="task.planned_end_time"
-                class="input text-sm px-1"
+                class="input text-sm px-0.5"
                 :disabled="studyStore.tasksConfirmed"
                 @change="studyStore.updateTask(index, { planned_end_time: task.planned_end_time }); cacheData()"
               />
             </div>
             <div class="flex flex-col">
               <label class="label text-xs lg:text-sm">时长</label>
-              <div class="flex-1 flex items-center justify-center px-1 py-1.5 lg:py-3 bg-primary-500/20 rounded-lg text-primary-400 font-medium text-xs lg:text-sm">
+              <div class="flex-1 flex items-center justify-center px-0.5 py-1.5 lg:py-3 bg-primary-500/20 rounded-lg text-primary-400 font-medium text-xs lg:text-sm whitespace-nowrap">
                 {{ formatDuration(task.planned_duration) }}
               </div>
             </div>
@@ -532,7 +665,7 @@ const dateStatus = computed(() => {
         </div>
 
         <!-- 总计 -->
-        <div class="flex justify-end">
+        <div id="plan-total" class="flex justify-end">
           <div class="px-6 py-3 bg-gradient-to-r from-primary-500/20 to-accent-500/20 rounded-xl">
             <span class="text-slate-400">总计划时间：</span>
             <span class="text-xl font-bold text-white ml-2">
