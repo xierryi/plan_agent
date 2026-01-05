@@ -304,7 +304,7 @@ const dateStatus = computed(() => {
         </div>
         <div class="flex gap-2">
           <button 
-            @click="studyStore.addTask"
+            @click="studyStore.addTask(); cacheData()"
             class="btn-secondary text-sm"
             :disabled="studyStore.tasksConfirmed"
             v-if="!studyStore.tasksConfirmed"
@@ -371,7 +371,7 @@ const dateStatus = computed(() => {
             <span class="text-sm text-slate-500">任务 {{ index + 1 }}</span>
             <button 
               v-if="!studyStore.tasksConfirmed"
-              @click="studyStore.removeTask(index)"
+              @click="studyStore.removeTask(index); cacheData()"
               class="text-red-400 hover:text-red-300 text-sm"
             >
               🗑️ 删除
@@ -480,7 +480,7 @@ const dateStatus = computed(() => {
       <div v-if="studyStore.plannedTasks.length === 0 && !studyStore.tasksConfirmed" class="text-center py-12 text-slate-500">
         <div class="text-4xl mb-4">📋</div>
         <p>还没有添加任务</p>
-        <button @click="studyStore.addTask" class="btn-primary mt-4">
+        <button @click="studyStore.addTask(); cacheData()" class="btn-primary mt-4">
           ➕ 添加第一个任务
         </button>
       </div>
