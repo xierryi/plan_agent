@@ -4,72 +4,88 @@ import { useStudyStore } from '../stores/study'
 
 const studyStore = useStudyStore()
 
-// 任务滚动索引相关
+// 计划任务滚动索引相关
 const showTaskIndex = ref(false)
 const currentVisibleTaskIndex = ref(1)
-const indexBarTop = ref(100) // 悬浮框的Y坐标
 const planSectionRef = ref(null)
+
+// 实际执行滚动索引相关
+const showExecIndex = ref(false)
+const currentVisibleExecIndex = ref(1)
+
 let scrollRAF = null // 用于requestAnimationFrame
 
 // 滚动处理的实际逻辑
 const updateScrollIndex = () => {
-  // 任务少于2个时不显示索引
+  const threshold = window.innerHeight / 2 // 屏幕中间作为阈值
+  
+  // === 计划任务索引 ===
   if (isPlanCollapsed.value || studyStore.plannedTasks.length < 2) {
     showTaskIndex.value = false
-    return
-  }
-  
-  const planSection = document.getElementById('plan-tasks')
-  if (!planSection) {
-    showTaskIndex.value = false
-    return
-  }
-  
-  // 获取所有任务元素
-  const taskElements = planSection.querySelectorAll('[data-task-index]')
-  if (taskElements.length < 2) {
-    showTaskIndex.value = false
-    return
-  }
-  
-  // 检查是否有任务卡片在屏幕内
-  let hasVisibleTask = false
-  for (let i = 0; i < taskElements.length; i++) {
-    const rect = taskElements[i].getBoundingClientRect()
-    // 如果任务的任何部分在屏幕内
-    if (rect.bottom > 0 && rect.top < window.innerHeight) {
-      hasVisibleTask = true
-      break
+  } else {
+    const planSection = document.getElementById('plan-tasks')
+    const taskElements = planSection?.querySelectorAll('[data-task-index]')
+    
+    if (taskElements && taskElements.length >= 2) {
+      let hasVisibleTask = false
+      for (let i = 0; i < taskElements.length; i++) {
+        const rect = taskElements[i].getBoundingClientRect()
+        if (rect.bottom > 0 && rect.top < window.innerHeight) {
+          hasVisibleTask = true
+          break
+        }
+      }
+      
+      showTaskIndex.value = hasVisibleTask
+      
+      if (hasVisibleTask) {
+        let currentTask = 1
+        for (let i = 0; i < taskElements.length; i++) {
+          const taskRect = taskElements[i].getBoundingClientRect()
+          if (taskRect.top > threshold) break
+          if (taskRect.bottom > 50) {
+            currentTask = parseInt(taskElements[i].dataset.taskIndex) || 1
+          }
+        }
+        currentVisibleTaskIndex.value = currentTask
+      }
+    } else {
+      showTaskIndex.value = false
     }
   }
   
-  showTaskIndex.value = hasVisibleTask
-  
-  if (hasVisibleTask) {
-    let currentTask = 1
-    let currentTaskElement = taskElements[0]
+  // === 实际执行索引 ===
+  if (!studyStore.tasksConfirmed || studyStore.actualExecution.length < 2) {
+    showExecIndex.value = false
+  } else {
+    const execSection = document.getElementById('actual-execution')
+    const execElements = execSection?.querySelectorAll('[data-exec-index]')
     
-    // 简单逻辑：找到顶部最接近屏幕顶部（但还在屏幕内或刚滚出）的任务
-    // 从前往后遍历，找最后一个顶部已经到达屏幕上半部分的任务
-    const threshold = window.innerHeight / 2 // 屏幕中间作为阈值
-    
-    for (let i = 0; i < taskElements.length; i++) {
-      const taskRect = taskElements[i].getBoundingClientRect()
+    if (execElements && execElements.length >= 2 && execSection) {
+      // 只有当实际执行区域占据屏幕一半以上时才显示悬浮栏
+      const execRect = execSection.getBoundingClientRect()
+      const screenHeight = window.innerHeight
+      const visibleTop = Math.max(0, execRect.top)
+      const visibleBottom = Math.min(screenHeight, execRect.bottom)
+      const visibleHeight = Math.max(0, visibleBottom - visibleTop)
+      const isHalfScreen = visibleHeight >= screenHeight / 2
       
-      // 如果任务顶部还没到屏幕中间，说明还没滚到这个任务，停止
-      if (taskRect.top > threshold) {
-        break
-      }
+      showExecIndex.value = isHalfScreen
       
-      // 如果任务还在屏幕内（底部在屏幕上方以下），更新当前任务
-      if (taskRect.bottom > 50) {
-        currentTask = parseInt(taskElements[i].dataset.taskIndex) || 1
-        currentTaskElement = taskElements[i]
+      if (isHalfScreen) {
+        let currentExec = 1
+        for (let i = 0; i < execElements.length; i++) {
+          const itemRect = execElements[i].getBoundingClientRect()
+          if (itemRect.top > threshold) break
+          if (itemRect.bottom > 50) {
+            currentExec = parseInt(execElements[i].dataset.execIndex) || 1
+          }
+        }
+        currentVisibleExecIndex.value = currentExec
       }
+    } else {
+      showExecIndex.value = false
     }
-    
-    currentVisibleTaskIndex.value = currentTask
-    // 悬浮框位置用CSS固定，不需要JS计算
   }
 }
 
@@ -90,16 +106,32 @@ const scrollToTask = (index) => {
     // 最后一个任务：滚动到让"总计划时间"显示在屏幕底部
     const totalElement = document.getElementById('plan-total')
     if (totalElement) {
-      // 计算滚动位置：让总计元素底部对齐屏幕底部（留出底部导航栏80px）
       const rect = totalElement.getBoundingClientRect()
       const targetScroll = window.scrollY + rect.bottom - window.innerHeight + 100
       window.scrollTo({ top: targetScroll, behavior: 'smooth' })
     }
   } else {
-    // 其他任务：滚动到屏幕中间
     const taskElement = document.querySelector(`[data-task-index="${index}"]`)
     if (taskElement) {
       taskElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }
+}
+
+// 点击索引跳转到对应实际执行
+const scrollToExec = (index) => {
+  const isLastExec = index === studyStore.actualExecution.length
+  
+  if (isLastExec) {
+    // 最后一个：滚动到实际执行区域底部
+    const execSection = document.getElementById('actual-execution')
+    if (execSection) {
+      execSection.scrollIntoView({ behavior: 'smooth', block: 'end' })
+    }
+  } else {
+    const execElement = document.querySelector(`[data-exec-index="${index}"]`)
+    if (execElement) {
+      execElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }
   }
 }
@@ -345,6 +377,8 @@ const executeConfirmPlan = () => {
   // 确认后自动折叠显示表格
   isPlanCollapsed.value = true
   showConfirmPlanDialog.value = false
+  // 隐藏悬浮栏
+  showTaskIndex.value = false
 }
 
 // 取消确认
@@ -384,7 +418,7 @@ const dateStatus = computed(() => {
 
 <template>
   <div class="space-y-3 lg:space-y-8">
-    <!-- 悬浮滚动索引 - 用Teleport固定到body，确保不受父元素影响 -->
+    <!-- 计划任务悬浮索引 -->
     <Teleport to="body">
       <div 
         v-if="showTaskIndex && studyStore.plannedTasks.length > 1"
@@ -399,6 +433,28 @@ const dateStatus = computed(() => {
             currentVisibleTaskIndex === n 
               ? 'bg-primary-500 text-white scale-110 shadow-lg shadow-primary-500/50' 
               : 'text-primary-400 hover:text-primary-300 hover:bg-primary-500/20'
+          ]"
+        >
+          {{ n }}
+        </button>
+      </div>
+    </Teleport>
+
+    <!-- 实际执行悬浮索引 -->
+    <Teleport to="body">
+      <div 
+        v-if="showExecIndex && studyStore.actualExecution.length > 1"
+        class="fixed left-0 top-1/2 -translate-y-1/2 z-[100] lg:hidden flex flex-col items-center gap-0.5 bg-slate-900/95 backdrop-blur rounded-r-lg py-2 px-1 border border-l-0 border-accent-600 shadow-lg"
+      >
+        <button
+          v-for="n in studyStore.actualExecution.length"
+          :key="n"
+          @click="scrollToExec(n)"
+          :class="[
+            'w-6 h-6 rounded text-xs font-medium transition-all flex items-center justify-center',
+            currentVisibleExecIndex === n 
+              ? 'bg-accent-500 text-white scale-110 shadow-lg shadow-accent-500/50' 
+              : 'text-accent-400 hover:text-accent-300 hover:bg-accent-500/20'
           ]"
         >
           {{ n }}
@@ -472,7 +528,7 @@ const dateStatus = computed(() => {
           <!-- 折叠按钮（确认后显示） -->
           <button 
             v-if="studyStore.tasksConfirmed"
-            @click="isPlanCollapsed = !isPlanCollapsed"
+            @click="isPlanCollapsed = !isPlanCollapsed; if(isPlanCollapsed) showTaskIndex = false"
             class="text-slate-400 hover:text-white transition-colors"
           >
             <span :class="['inline-block transition-transform', isPlanCollapsed ? '' : 'rotate-90']">▶</span>
@@ -689,19 +745,37 @@ const dateStatus = computed(() => {
     <div id="actual-execution" v-if="studyStore.tasksConfirmed" class="card animate-fade-in">
       <h3 class="text-base lg:text-lg font-semibold text-white mb-3 lg:mb-6">✅ 实际执行</h3>
       
-      <div class="space-y-2 lg:space-y-4">
+      <div class="space-y-2 lg:space-y-4 ml-5 lg:ml-0">
         <div 
           v-for="(item, idx) in sortedActualExecution" 
           :key="item.task_id"
-          class="p-2.5 lg:p-4 bg-slate-800/50 rounded-lg lg:rounded-xl border border-slate-700"
+          :data-exec-index="idx + 1"
+          class="p-2.5 lg:p-4 bg-slate-800/50 rounded-lg lg:rounded-xl border border-slate-700 space-y-2 lg:space-y-4"
         >
-          <div class="flex items-center gap-2 lg:gap-4 mb-2 lg:mb-4">
-            <div class="flex-1">
-              <label class="label">实际任务名称</label>
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-slate-500">执行 {{ idx + 1 }}</span>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input 
+                type="checkbox" 
+                v-model="studyStore.actualExecution[item.originalIndex].completed"
+                class="w-4 h-4 rounded border-slate-600 text-primary-500 focus:ring-primary-500"
+                :disabled="studyStore.tasksSaved"
+                @change="cacheData"
+              />
+              <span :class="['text-sm', studyStore.actualExecution[item.originalIndex].completed ? 'text-emerald-400' : 'text-slate-500']">
+                {{ studyStore.actualExecution[item.originalIndex].completed ? '✓ 完成' : '未完成' }}
+              </span>
+            </label>
+          </div>
+
+          <!-- 第一行：任务名称 + 精力 -->
+          <div class="grid grid-cols-[1fr_auto] gap-2">
+            <div>
+              <label class="label text-xs lg:text-sm">实际任务名称</label>
               <input 
                 type="text"
                 v-model="studyStore.actualExecution[item.originalIndex].actual_task_name"
-                class="input"
+                class="input text-sm"
                 :placeholder="item.plannedTask?.task_name"
                 :disabled="studyStore.tasksSaved"
                 @input="cacheData"
@@ -710,56 +784,44 @@ const dateStatus = computed(() => {
                 原计划：{{ item.plannedTask?.task_name }}
               </div>
             </div>
-            <div class="pt-6">
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  v-model="studyStore.actualExecution[item.originalIndex].completed"
-                  class="w-5 h-5 rounded border-slate-600 text-primary-500 focus:ring-primary-500"
-                  :disabled="studyStore.tasksSaved"
-                  @change="cacheData"
-                />
-                <span :class="studyStore.actualExecution[item.originalIndex].completed ? 'text-emerald-400' : 'text-slate-500'">
-                  {{ studyStore.actualExecution[item.originalIndex].completed ? '已完成' : '未完成' }}
-                </span>
-              </label>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <label class="label">实际开始</label>
-              <input 
-                type="time"
-                v-model="studyStore.actualExecution[item.originalIndex].actual_start_time"
-                class="input"
-                :disabled="studyStore.tasksSaved"
-                @change="studyStore.updateExecution(item.originalIndex, { actual_start_time: studyStore.actualExecution[item.originalIndex].actual_start_time }); cacheData()"
-              />
-            </div>
-            <div>
-              <label class="label">实际结束</label>
-              <input 
-                type="time"
-                v-model="studyStore.actualExecution[item.originalIndex].actual_end_time"
-                class="input"
-                :disabled="studyStore.tasksSaved"
-                @change="studyStore.updateExecution(item.originalIndex, { actual_end_time: studyStore.actualExecution[item.originalIndex].actual_end_time }); cacheData()"
-              />
-            </div>
-            <div>
-              <label class="label">结束后精力</label>
+            <div class="w-14">
+              <label class="label text-xs lg:text-sm">精力</label>
               <select 
                 v-model.number="studyStore.actualExecution[item.originalIndex].post_energy" 
-                class="input"
+                class="input text-sm px-1"
                 :disabled="studyStore.tasksSaved"
                 @change="cacheData"
               >
                 <option v-for="n in 10" :key="n" :value="n">{{ n }}</option>
               </select>
             </div>
-            <div class="flex items-end">
-              <div class="px-4 py-3 bg-accent-500/20 rounded-xl text-accent-400 font-medium w-full text-center">
+          </div>
+
+          <!-- 第二行：开始 + 结束 + 时长 -->
+          <div class="grid grid-cols-3 gap-1 lg:gap-4">
+            <div>
+              <label class="label text-xs lg:text-sm">开始</label>
+              <input 
+                type="time"
+                v-model="studyStore.actualExecution[item.originalIndex].actual_start_time"
+                class="input text-sm px-0.5"
+                :disabled="studyStore.tasksSaved"
+                @change="studyStore.updateExecution(item.originalIndex, { actual_start_time: studyStore.actualExecution[item.originalIndex].actual_start_time }); cacheData()"
+              />
+            </div>
+            <div>
+              <label class="label text-xs lg:text-sm">结束</label>
+              <input 
+                type="time"
+                v-model="studyStore.actualExecution[item.originalIndex].actual_end_time"
+                class="input text-sm px-0.5"
+                :disabled="studyStore.tasksSaved"
+                @change="studyStore.updateExecution(item.originalIndex, { actual_end_time: studyStore.actualExecution[item.originalIndex].actual_end_time }); cacheData()"
+              />
+            </div>
+            <div class="flex flex-col">
+              <label class="label text-xs lg:text-sm">时长</label>
+              <div class="flex-1 flex items-center justify-center px-0.5 py-1.5 lg:py-3 bg-accent-500/20 rounded-lg text-accent-400 font-medium text-xs lg:text-sm whitespace-nowrap">
                 {{ formatDuration(studyStore.actualExecution[item.originalIndex].actual_duration) }}
               </div>
             </div>
