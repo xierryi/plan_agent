@@ -412,8 +412,9 @@ const dateStatus = computed(() => {
             </button>
           </div>
 
-          <div class="space-y-3">
-            <div>
+          <!-- 第一行：任务名称 + 学科 -->
+          <div class="grid grid-cols-3 gap-2">
+            <div class="col-span-2">
               <label class="label text-xs lg:text-sm">任务名称</label>
               <input 
                 type="text"
@@ -424,47 +425,44 @@ const dateStatus = computed(() => {
                 @input="cacheData"
               />
             </div>
-            
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="label text-xs lg:text-sm">学科</label>
-                <select 
-                  v-model="task.subject" 
-                  class="input text-sm"
-                  :disabled="studyStore.tasksConfirmed"
-                  @change="cacheData"
-                >
-                  <option v-for="s in subjects" :key="s.value" :value="s.value">
-                    {{ s.icon }} {{ s.label }}
-                  </option>
-                </select>
-              </div>
-
-              <div>
-                <label class="label text-xs lg:text-sm">难度</label>
-                <select 
-                  v-model.number="task.difficulty" 
-                  class="input text-sm"
-                  :disabled="studyStore.tasksConfirmed"
-                  @change="cacheData"
-                >
-                  <option :value="1">⭐ 简单</option>
-                  <option :value="2">⭐⭐ 较易</option>
-                  <option :value="3">⭐⭐⭐ 中等</option>
-                  <option :value="4">⭐⭐⭐⭐ 较难</option>
-                  <option :value="5">⭐⭐⭐⭐⭐ 困难</option>
-                </select>
-              </div>
+            <div>
+              <label class="label text-xs lg:text-sm">学科</label>
+              <select 
+                v-model="task.subject" 
+                class="input text-sm"
+                :disabled="studyStore.tasksConfirmed"
+                @change="cacheData"
+              >
+                <option v-for="s in subjects" :key="s.value" :value="s.value">
+                  {{ s.icon }} {{ s.label }}
+                </option>
+              </select>
             </div>
           </div>
 
-          <div class="grid grid-cols-3 gap-2 lg:gap-4">
+          <!-- 第二行：难度 + 开始 + 结束 + 时长 -->
+          <div class="grid grid-cols-4 gap-1.5 lg:gap-4">
+            <div>
+              <label class="label text-xs lg:text-sm">难度</label>
+              <select 
+                v-model.number="task.difficulty" 
+                class="input text-sm px-1.5"
+                :disabled="studyStore.tasksConfirmed"
+                @change="cacheData"
+              >
+                <option :value="1">⭐</option>
+                <option :value="2">⭐⭐</option>
+                <option :value="3">⭐⭐⭐</option>
+                <option :value="4">⭐⭐⭐⭐</option>
+                <option :value="5">⭐⭐⭐⭐⭐</option>
+              </select>
+            </div>
             <div>
               <label class="label text-xs lg:text-sm">开始</label>
               <input 
                 type="time"
                 v-model="task.planned_start_time"
-                class="input text-sm"
+                class="input text-sm px-1"
                 :disabled="studyStore.tasksConfirmed"
                 @change="studyStore.updateTask(index, { planned_start_time: task.planned_start_time }); cacheData()"
               />
@@ -474,13 +472,14 @@ const dateStatus = computed(() => {
               <input 
                 type="time"
                 v-model="task.planned_end_time"
-                class="input text-sm"
+                class="input text-sm px-1"
                 :disabled="studyStore.tasksConfirmed"
                 @change="studyStore.updateTask(index, { planned_end_time: task.planned_end_time }); cacheData()"
               />
             </div>
-            <div class="flex items-end">
-              <div class="px-2 lg:px-4 py-3 bg-primary-500/20 rounded-xl text-primary-400 font-medium w-full text-center text-xs lg:text-sm">
+            <div class="flex flex-col">
+              <label class="label text-xs lg:text-sm">时长</label>
+              <div class="flex-1 flex items-center justify-center px-1 py-1.5 lg:py-3 bg-primary-500/20 rounded-lg text-primary-400 font-medium text-xs lg:text-sm">
                 {{ formatDuration(task.planned_duration) }}
               </div>
             </div>
